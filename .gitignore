@@ -4,3 +4,7 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+_site/
+.sass-cache/
+.jekyll-cache/
+Gemfile.lock
