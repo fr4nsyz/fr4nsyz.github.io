@@ -3,7 +3,7 @@ layout: post
 title: "Flagship"
 date: 2026-06-02
 description: "Master Skywalker, there are too many of them! What are we going to do?"
-tags: [meta, intro]
+tags: [cybersecurity, project]
 ---
 
 Coming straight from my 17 year old hacking phase, something that interested me were EDRs (Endpoint Detection and Response Systems).
