@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Flagship"
-date: 2026-05-28
+date: 2026-06-02
 description: "Master Skywalker, there are too many of them! What are we going to do?"
 tags: [meta, intro]
 ---
