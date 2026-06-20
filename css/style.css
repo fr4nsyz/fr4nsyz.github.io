@@ -36,7 +36,7 @@ body {
   color: var(--gutter);
   font: inherit;
   line-height: inherit;
-  padding: 0.2em 1ch 0 0;
+  padding: 0 1ch 0 0;
   pointer-events: none;
   white-space: pre;
   overflow: hidden;
