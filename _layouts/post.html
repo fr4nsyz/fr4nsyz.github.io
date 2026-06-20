@@ -1,15 +1,9 @@
 <article>
-  <header class="mb-8">
-    <h1 class="text-accent">{{ page_title }}</h1>
-    <p class="text-sm text-[rgb(var(--gray))]">
-      <time datetime="{{ date_xml }}">{{ date_formatted }}</time>
-    </p>
+  <header>
+    <h1>{{ page_title }}</h1>
+    <p class="date"><time datetime="{{ date_xml }}">{{ date_formatted }}</time></p>
     {% if tags %}
-    <div class="flex flex-wrap gap-2 mt-2">
-      {% for tag in tags %}
-      <span class="text-xs px-2 py-1 rounded-full bg-[rgba(var(--gray-light),0.3)] text-[rgb(var(--gray-dark))] border border-[rgba(255,42,42,0.2)]">{{ tag }}</span>
-      {% endfor %}
-    </div>
+    <p>{% for tag in tags %}<span class="tag">#{{ tag }}</span> {% endfor %}</p>
     {% endif %}
   </header>
   {{ content | safe }}
