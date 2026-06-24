@@ -30,6 +30,7 @@
   </div>
   <div class="buffer">
     <div id="gutter" class="gutter" aria-hidden="true"></div>
+    <div id="crt-overlay"></div>
     <div id="cursor"></div>
     <main>
       {{ content | safe }}
@@ -44,7 +45,7 @@
       var lh, pt, bufTop;
       var cursorLine = 1, cursorCol = 0;
       var contentLines = 1;
-      var fullText = '', wordStarts = [];
+      var fullText = '';
 
       function isWordChar(c) {
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
@@ -55,41 +56,89 @@
         var main = document.querySelector('main');
         if (!main) return;
         fullText = main.textContent || '';
-        wordStarts = [];
-        var inWord = false;
-        for (var i = 0; i < fullText.length; i++) {
-          if (isWordChar(fullText[i]) && !inWord) { wordStarts.push(i); inWord = true; }
-          else if (!isWordChar(fullText[i])) inWord = false;
-        }
       }
 
-      function nextWordStart(from) {
-        var i = Math.min(from, fullText.length);
-        while (i < fullText.length && isWordChar(fullText[i])) i++;
-        while (i < fullText.length && !isWordChar(fullText[i])) i++;
-        return Math.min(i, fullText.length);
-      }
-
-      function prevWordStart(from) {
-        if (from <= 0) return 0;
-        var i = from - 1;
-        if (isWordChar(fullText[i])) {
-          while (i > 0 && isWordChar(fullText[i - 1])) i--;
-        } else {
-          while (i > 0 && !isWordChar(fullText[i])) i--;
-          while (i > 0 && isWordChar(fullText[i - 1])) i--;
-        }
+      function nextWordStart(pos) {
+        var i = pos;
+        if (i >= fullText.length) return fullText.length;
+        while (i < fullText.length && fullText[i] === ' ') i++;
+        if (i >= fullText.length) return fullText.length;
+        var type = isWordChar(fullText[i]) ? 1 : 0;
+        while (i < fullText.length && fullText[i] !== ' ' && (type ? isWordChar(fullText[i]) : !isWordChar(fullText[i]))) i++;
+        while (i < fullText.length && fullText[i] === ' ') i++;
         return i;
       }
 
-      function wordEndCursor(from) {
-        if (from >= fullText.length) return fullText.length;
-        var i = from;
-        while (i < fullText.length && !isWordChar(fullText[i])) i++;
-        if (i >= fullText.length) return fullText.length;
-        while (i < fullText.length && isWordChar(fullText[i])) i++;
-        return i - 1;
+      function prevWordStart(pos) {
+        if (pos <= 0) return 0;
+        var i = pos;
+        while (i > 0 && fullText[i - 1] === ' ') i--;
+        if (i === 0) return 0;
+        var type = isWordChar(fullText[i - 1]) ? 1 : 0;
+        while (i > 0 && fullText[i - 1] !== ' ' && (type ? isWordChar(fullText[i - 1]) : !isWordChar(fullText[i - 1]))) i--;
+        return i;
       }
+
+      function wordEndAt(pos) {
+        if (pos >= fullText.length) return fullText.length - 1;
+        while (pos < fullText.length && fullText[pos] === ' ') pos++;
+        if (pos >= fullText.length) return fullText.length - 1;
+        var type = isWordChar(fullText[pos]) ? 1 : 0;
+        while (pos < fullText.length && fullText[pos] !== ' ' && (type ? isWordChar(fullText[pos]) : !isWordChar(fullText[pos]))) pos++;
+        return pos - 1;
+      }
+
+      function wordEndCursor(pos) {
+        var end = wordEndAt(pos);
+        if (pos >= end) {
+          var j = end + 1;
+          while (j < fullText.length && fullText[j] === ' ') j++;
+          return j >= fullText.length ? (fullText.length - 1) : wordEndAt(j);
+        }
+        return end;
+      }
+
+      function lineBegin() {
+        var i = cursorCol;
+        while (i > 0 && fullText[i - 1] !== '\n') i--;
+        while (i < fullText.length && fullText[i] === ' ') i++;
+        return i;
+      }
+
+      function lineEnd() {
+        var i = cursorCol;
+        while (i < fullText.length && fullText[i] !== '\n') i++;
+        return i;
+      }
+
+      var audio = (function() {
+        var ctx = null;
+        function getCtx() {
+          if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+          return ctx;
+        }
+        function beep(freq, dur, type, vol) {
+          try {
+            var c = getCtx();
+            var o = c.createOscillator();
+            var g = c.createGain();
+            o.type = type || 'square';
+            o.frequency.value = freq;
+            g.gain.setValueAtTime(vol || 0.03, c.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+            o.connect(g);
+            g.connect(c.destination);
+            o.start();
+            o.stop(c.currentTime + dur);
+          } catch(e) {}
+        }
+        return {
+          move: function() { beep(880, 0.04, 'square', 0.025); },
+          scroll: function() { beep(440, 0.06, 'sawtooth', 0.025); },
+          menu: function() { beep(1100, 0.035, 'square', 0.02); },
+          edge: function() { beep(220, 0.08, 'sawtooth', 0.03); }
+        };
+      })();
 
       function loadMetrics() {
         var cs = getComputedStyle(document.body);
@@ -200,17 +249,20 @@
       var lastKey, ggTimer;
       document.addEventListener('keydown', function(e) {
         if (e.target.matches('input, textarea, [contenteditable]')) return;
-        if (e.key === 'j') { e.preventDefault(); move(1); return; }
-        if (e.key === 'k') { e.preventDefault(); move(-1); return; }
-        if (e.key === 'G') { e.preventDefault(); gotoLine(contentLines); return; }
-        if (e.ctrlKey && e.key === 'd') { e.preventDefault(); move(Math.floor(window.innerHeight / lh / 2)); return; }
-        if (e.ctrlKey && e.key === 'u') { e.preventDefault(); move(-Math.floor(window.innerHeight / lh / 2)); return; }
-        if (e.key === 'h') { e.preventDefault(); cursorCol = Math.max(0, cursorCol - 1); placeCursor(); return; }
-        if (e.key === 'l') { e.preventDefault(); cursorCol = Math.min(fullText.length, cursorCol + 1); placeCursor(); return; }
-        if (e.key === 'w') { e.preventDefault(); cursorCol = nextWordStart(cursorCol + 1); placeCursor(); return; }
-        if (e.key === 'b') { e.preventDefault(); cursorCol = prevWordStart(cursorCol); placeCursor(); return; }
-        if (e.key === 'e') { e.preventDefault(); cursorCol = wordEndCursor(cursorCol + 1); placeCursor(); return; }
+        if (e.key === 'j') { e.preventDefault(); audio.move(); move(1); return; }
+        if (e.key === 'k') { e.preventDefault(); audio.move(); move(-1); return; }
+        if (e.key === 'G') { e.preventDefault(); audio.scroll(); gotoLine(contentLines); return; }
+        if (e.ctrlKey && e.key === 'd') { e.preventDefault(); audio.scroll(); move(Math.floor(window.innerHeight / lh / 2)); return; }
+        if (e.ctrlKey && e.key === 'u') { e.preventDefault(); audio.scroll(); move(-Math.floor(window.innerHeight / lh / 2)); return; }
+        if (e.key === 'h') { e.preventDefault(); var pc = cursorCol; cursorCol = Math.max(0, cursorCol - 1); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
+        if (e.key === 'l') { e.preventDefault(); var pc = cursorCol; cursorCol = Math.min(fullText.length, cursorCol + 1); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
+        if (e.key === 'w') { e.preventDefault(); var pc = cursorCol; cursorCol = nextWordStart(cursorCol); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
+        if (e.key === 'b') { e.preventDefault(); var pc = cursorCol; cursorCol = prevWordStart(cursorCol); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
+        if (e.key === 'e') { e.preventDefault(); var pc = cursorCol; cursorCol = wordEndCursor(cursorCol); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
+        if (e.key === '_') { e.preventDefault(); cursorCol = lineBegin(); audio.move(); placeCursor(); return; }
+        if (e.key === '$') { e.preventDefault(); cursorCol = lineEnd(); audio.move(); placeCursor(); return; }
         if (/^[0-4]$/.test(e.key)) {
+          audio.menu();
           var links = document.querySelectorAll('.tmux-win');
           var idx = parseInt(e.key);
           if (links[idx]) { e.preventDefault(); window.location.href = links[idx].getAttribute('href'); }
@@ -221,12 +273,16 @@
           if (lastKey === 'g') {
             clearTimeout(ggTimer);
             lastKey = null;
+            audio.scroll();
             gotoLine(1);
           } else {
             lastKey = 'g';
             ggTimer = setTimeout(function() { lastKey = null; }, 400);
           }
         }
+      });
+      document.querySelectorAll('.tmux-win').forEach(function(a) {
+        a.addEventListener('click', audio.menu);
       });
 
       var rt;
