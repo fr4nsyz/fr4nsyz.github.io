@@ -20,13 +20,13 @@
 </head>
 <body>
   <div class="tmux-bar">
-    <span class="tmux-session">[101]</span>
-    <a href="/" class="tmux-win">0:Index</a>
+    <span class="tmux-session">[0]</span>
+    <a href="/" class="tmux-win">0:IDX</a>
     <a href="/#whoami" class="tmux-win">1:STAT</a>
     <a href="/#experience" class="tmux-win">2:PERKS</a>
     <a href="/#projects" class="tmux-win">3:INV</a>
     <a href="/blog" class="tmux-win">4:DATA</a>
-    <span class="tmux-right">PIP-BOY 3000</span>
+    <span class="tmux-right">fr4nsyz HUD</span>
   </div>
   <div class="buffer">
     <div id="gutter" class="gutter" aria-hidden="true"></div>
@@ -35,6 +35,28 @@
     <main>
       {{ content | safe }}
     </main>
+  </div>
+  <div id="hint"></div>
+  <div id="modal" class="modal-hidden">
+    <div id="modal-box">
+      <div class="modal-title">fr4nsyz HUD <span class="tag">v1.0</span></div>
+      <div class="modal-section">
+        <div class="modal-section-title">> NAVIGATE LIKE NEOVIM</div>
+        <div class="modal-row"><span class="modal-key">j/k</span> scroll up / down</div>
+        <div class="modal-row"><span class="modal-key">h/l</span> move cursor left / right</div>
+        <div class="modal-row"><span class="modal-key">gg/G</span> go to top / bottom</div>
+        <div class="modal-row"><span class="modal-key">w/b/e</span> word fwd / back / end</div>
+        <div class="modal-row"><span class="modal-key">_/$</span> line start / end</div>
+        <div class="modal-row"><span class="modal-key">ctrl-d/u</span> half page down / up</div>
+        <div class="modal-row"><span class="modal-key">y</span> click link at cursor</div>
+        <div class="modal-row"><span class="modal-key">0-4</span> switch tabs</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">> OR USE THE MOUSE</div>
+        <div class="modal-row">click links, scroll, tap the tmux bar</div>
+      </div>
+      <div class="modal-footer">[ PRESS ENTER ]</div>
+    </div>
   </div>
   <script>
     (function() {
@@ -45,71 +67,6 @@
       var lh, pt, bufTop;
       var cursorLine = 1, cursorCol = 0;
       var contentLines = 1;
-      var fullText = '';
-
-      function isWordChar(c) {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-               (c >= '0' && c <= '9') || c === '_';
-      }
-
-      function initText() {
-        var main = document.querySelector('main');
-        if (!main) return;
-        fullText = main.textContent || '';
-      }
-
-      function nextWordStart(pos) {
-        var i = pos;
-        if (i >= fullText.length) return fullText.length;
-        while (i < fullText.length && fullText[i] === ' ') i++;
-        if (i >= fullText.length) return fullText.length;
-        var type = isWordChar(fullText[i]) ? 1 : 0;
-        while (i < fullText.length && fullText[i] !== ' ' && (type ? isWordChar(fullText[i]) : !isWordChar(fullText[i]))) i++;
-        while (i < fullText.length && fullText[i] === ' ') i++;
-        return i;
-      }
-
-      function prevWordStart(pos) {
-        if (pos <= 0) return 0;
-        var i = pos;
-        while (i > 0 && fullText[i - 1] === ' ') i--;
-        if (i === 0) return 0;
-        var type = isWordChar(fullText[i - 1]) ? 1 : 0;
-        while (i > 0 && fullText[i - 1] !== ' ' && (type ? isWordChar(fullText[i - 1]) : !isWordChar(fullText[i - 1]))) i--;
-        return i;
-      }
-
-      function wordEndAt(pos) {
-        if (pos >= fullText.length) return fullText.length - 1;
-        while (pos < fullText.length && fullText[pos] === ' ') pos++;
-        if (pos >= fullText.length) return fullText.length - 1;
-        var type = isWordChar(fullText[pos]) ? 1 : 0;
-        while (pos < fullText.length && fullText[pos] !== ' ' && (type ? isWordChar(fullText[pos]) : !isWordChar(fullText[pos]))) pos++;
-        return pos - 1;
-      }
-
-      function wordEndCursor(pos) {
-        var end = wordEndAt(pos);
-        if (pos >= end) {
-          var j = end + 1;
-          while (j < fullText.length && fullText[j] === ' ') j++;
-          return j >= fullText.length ? (fullText.length - 1) : wordEndAt(j);
-        }
-        return end;
-      }
-
-      function lineBegin() {
-        var i = cursorCol;
-        while (i > 0 && fullText[i - 1] !== '\n') i--;
-        while (i < fullText.length && fullText[i] === ' ') i++;
-        return i;
-      }
-
-      function lineEnd() {
-        var i = cursorCol;
-        while (i < fullText.length && fullText[i] !== '\n') i++;
-        return i;
-      }
 
       var audio = (function() {
         var ctx = null;
@@ -139,6 +96,37 @@
           edge: function() { beep(220, 0.08, 'sawtooth', 0.03); }
         };
       })();
+
+      function clickLinkAtCursor() {
+        var cr = cursorEl.getBoundingClientRect();
+        var x = cr.left + cr.width / 2;
+        var y = cr.top + cr.height / 2;
+        var el = document.elementFromPoint(x, y);
+        while (el) {
+          if (el.tagName === 'A') {
+            audio.menu();
+            el.click();
+            return true;
+          }
+          el = el.parentElement;
+        }
+        return false;
+      }
+
+      var hintEl = document.getElementById('hint');
+      function setupHints() {
+        document.querySelectorAll('a').forEach(function(a) {
+          a.addEventListener('mouseenter', function() {
+            var href = this.getAttribute('href');
+            if (href) hintEl.textContent = '\2192 ' + href;
+            hintEl.classList.add('active');
+          });
+          a.addEventListener('mouseleave', function() {
+            hintEl.textContent = '';
+            hintEl.classList.remove('active');
+          });
+        });
+      }
 
       function loadMetrics() {
         var cs = getComputedStyle(document.body);
@@ -171,9 +159,30 @@
         gutter.textContent = out.join('\n');
       }
 
+      var chPx = 0;
+      function measureCh() {
+        var el = document.createElement('span');
+        el.style.cssText = 'font:inherit;visibility:hidden;position:fixed;white-space:pre;';
+        el.textContent = '0'.repeat(50);
+        document.body.appendChild(el);
+        chPx = el.offsetWidth / 50;
+        document.body.removeChild(el);
+      }
+
+      function maxCursorCol() {
+        var buf = document.querySelector('.buffer');
+        var avail = buf.clientWidth - parseFloat(getComputedStyle(buf).paddingLeft) - 8;
+        return Math.max(0, Math.floor(avail / chPx) - 1);
+      }
+
       function placeCursor() {
+        var maxCol = maxCursorCol();
+        var col = cursorCol;
+        if (col > maxCol) col = maxCol;
+        var buf = document.querySelector('.buffer');
+        var padLeft = parseFloat(getComputedStyle(buf).paddingLeft) || 0;
         cursorEl.style.top = ((cursorLine - 1) * lh) + 'px';
-        cursorEl.style.left = (9 + cursorCol) + 'ch';
+        cursorEl.style.left = (padLeft + col * chPx) + 'px';
       }
 
       function centerView() {
@@ -204,14 +213,43 @@
 
       function init() {
         loadMetrics();
-        initText();
+        setupHints();
+        measureCh();
         refreshGutter();
         var vh = window.innerHeight;
         var viewLines = Math.floor(vh / lh);
         cursorLine = Math.min(Math.floor(viewLines / 2), contentLines);
         if (cursorLine < 1) cursorLine = 1;
+        cursorCol = 0;
         placeCursor();
         centerView();
+        if (document.fonts) {
+          document.fonts.ready.then(function() {
+            measureCh();
+            placeCursor();
+          });
+        }
+      }
+
+      function dismissModal() {
+        var m = document.getElementById('modal');
+        if (!m) return;
+        m.classList.add('modal-hidden');
+        audio.menu();
+      }
+
+      function initModal() {
+        var m = document.getElementById('modal');
+        if (!m) return;
+        if (window.innerWidth <= 720) {
+          m.classList.add('modal-hidden');
+          return;
+        }
+        if (window.location.pathname === '/' || window.location.pathname === '') {
+          m.classList.remove('modal-hidden');
+        } else {
+          m.classList.add('modal-hidden');
+        }
       }
 
       function updateActiveTab() {
@@ -245,22 +283,34 @@
       });
 
       init();
+      initModal();
 
       var lastKey, ggTimer;
       document.addEventListener('keydown', function(e) {
         if (e.target.matches('input, textarea, [contenteditable]')) return;
+        var modal = document.getElementById('modal');
+        if (modal && !modal.classList.contains('modal-hidden')) {
+          if (e.key === 'Enter' || e.key === 'Escape') {
+            e.preventDefault();
+            dismissModal();
+          } else {
+            e.preventDefault();
+          }
+          return;
+        }
         if (e.key === 'j') { e.preventDefault(); audio.move(); move(1); return; }
         if (e.key === 'k') { e.preventDefault(); audio.move(); move(-1); return; }
         if (e.key === 'G') { e.preventDefault(); audio.scroll(); gotoLine(contentLines); return; }
         if (e.ctrlKey && e.key === 'd') { e.preventDefault(); audio.scroll(); move(Math.floor(window.innerHeight / lh / 2)); return; }
         if (e.ctrlKey && e.key === 'u') { e.preventDefault(); audio.scroll(); move(-Math.floor(window.innerHeight / lh / 2)); return; }
-        if (e.key === 'h') { e.preventDefault(); var pc = cursorCol; cursorCol = Math.max(0, cursorCol - 1); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
-        if (e.key === 'l') { e.preventDefault(); var pc = cursorCol; cursorCol = Math.min(fullText.length, cursorCol + 1); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
-        if (e.key === 'w') { e.preventDefault(); var pc = cursorCol; cursorCol = nextWordStart(cursorCol); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
-        if (e.key === 'b') { e.preventDefault(); var pc = cursorCol; cursorCol = prevWordStart(cursorCol); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
-        if (e.key === 'e') { e.preventDefault(); var pc = cursorCol; cursorCol = wordEndCursor(cursorCol); if (cursorCol !== pc) audio.move(); placeCursor(); return; }
-        if (e.key === '_') { e.preventDefault(); cursorCol = lineBegin(); audio.move(); placeCursor(); return; }
-        if (e.key === '$') { e.preventDefault(); cursorCol = lineEnd(); audio.move(); placeCursor(); return; }
+        if (e.key === 'h') { e.preventDefault(); if (cursorCol > 0) { cursorCol--; audio.move(); } else { cursorCol = 0; audio.edge(); } placeCursor(); return; }
+        if (e.key === 'l') { e.preventDefault(); var maxCol = maxCursorCol(); if (cursorCol < maxCol) { cursorCol++; audio.move(); } else { cursorCol = maxCol; audio.edge(); } placeCursor(); return; }
+        if (e.key === 'y') { e.preventDefault(); clickLinkAtCursor(); return; }
+        if (e.key === 'w') { e.preventDefault(); var maxCol = maxCursorCol(); var step = Math.min(8, maxCol - cursorCol); if (step > 0) { cursorCol += step; audio.move(); placeCursor(); } return; }
+        if (e.key === 'b') { e.preventDefault(); var step = Math.min(8, cursorCol); if (step > 0) { cursorCol -= step; audio.move(); placeCursor(); } return; }
+        if (e.key === 'e') { e.preventDefault(); var maxCol = maxCursorCol(); var step = Math.min(8, maxCol - cursorCol); if (step > 0) { cursorCol += step; audio.move(); placeCursor(); } return; }
+        if (e.key === '_') { e.preventDefault(); cursorCol = 0; audio.move(); placeCursor(); return; }
+        if (e.key === '$') { e.preventDefault(); cursorCol = maxCursorCol(); audio.move(); placeCursor(); return; }
         if (/^[0-4]$/.test(e.key)) {
           audio.menu();
           var links = document.querySelectorAll('.tmux-win');
@@ -290,6 +340,7 @@
         clearTimeout(rt);
         rt = setTimeout(function() {
           loadMetrics();
+          measureCh();
           refreshGutter();
           placeCursor();
           centerView();

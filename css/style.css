@@ -26,7 +26,7 @@ body {
 
 .buffer {
   position: relative;
-  padding: 0.2em 0 0 9ch;
+  padding: 0 0 2em 9ch;
   min-height: calc(100vh - 2em);
 }
 
@@ -152,11 +152,33 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-size: 1em;
   font-weight: 700;
-  margin: 1.5em 0 0.5em;
+  margin: 0;
   color: var(--fg);
 }
 
-h1 { margin-top: 0; }
+h2 { margin-top: 1lh; }
+
+.whoami-grid {
+  display: flex;
+  gap: 2em;
+  align-items: flex-start;
+}
+
+.whoami-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.whoami-art {
+  flex-shrink: 0;
+  font-size: 10px;
+  line-height: 1.1;
+  background: none !important;
+  border: none !important;
+  padding: 0;
+  margin: 0;
+  color: var(--gutter);
+}
 
 h1::before, h2::before {
   content: '> ';
@@ -164,7 +186,7 @@ h1::before, h2::before {
 }
 
 p {
-  margin-bottom: 0.5em;
+  margin: 0;
 }
 
 a {
@@ -179,11 +201,11 @@ a:hover {
 ul {
   list-style: none;
   padding: 0;
-  margin: 0.5em 0;
+  margin: 0;
 }
 
 li {
-  margin-bottom: 0.5em;
+  margin: 0;
 }
 
 strong {
@@ -195,12 +217,26 @@ strong {
   font-size: 0.85em;
 }
 
+.org {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+section ul, .whoami-text {
+  padding-left: 3ch;
+}
+
+section li {
+  margin-bottom: 1lh;
+}
+
 .date {
   color: var(--gutter);
+  margin-bottom: 1lh;
 }
 
 article header {
-  margin-bottom: 1.5em;
+  margin-bottom: 1lh;
 }
 
 code {
@@ -215,7 +251,7 @@ pre {
   background: #1a120a;
   padding: 1em;
   overflow-x: auto;
-  margin: 1em 0;
+  margin: 1lh 0;
   border-radius: 3px;
   border: 1px solid #3a2a0f;
 }
@@ -228,7 +264,7 @@ pre code {
 blockquote {
   border-left: 3px solid var(--gutter);
   padding-left: 1em;
-  margin: 1em 0;
+  margin: 1lh 0;
   color: #8a6a2a;
 }
 
@@ -245,12 +281,15 @@ blockquote {
   .tmux-win { padding: 0.3em 0.5em; }
   .tmux-session { font-size: 0.85em; }
   .tmux-right { font-size: 0.75em; }
+  #hint { display: none; }
+  .whoami-grid { flex-direction: column; }
+  .whoami-art { font-size: 6px; max-width: 100%; }
 }
 
 hr {
   border: none;
   border-top: 1px solid #3a2a0f;
-  margin: 1.5em 0;
+  margin: 1lh 0;
 }
 
 img {
@@ -261,4 +300,101 @@ img {
 ::selection {
   background: var(--fg);
   color: var(--bg);
+}
+
+#hint {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.6em;
+  background: #1a120a;
+  color: var(--gutter);
+  font-size: 14px;
+  line-height: 1.6em;
+  padding: 0 1ch;
+  font-family: "Fira Code", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-top: 1px solid #3a2a0f;
+  z-index: 30;
+  pointer-events: none;
+  transition: color 0.15s;
+}
+
+#hint.active {
+  color: var(--fg);
+}
+
+#modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s;
+}
+
+#modal.modal-hidden {
+  display: none;
+}
+
+#modal-box {
+  background: var(--bg);
+  border: 1px solid var(--gutter);
+  padding: 1.5em 2em;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 0 20px rgba(232, 184, 109, 0.08), inset 0 0 30px rgba(0,0,0,0.5);
+}
+
+.modal-title {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 1lh;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.modal-section {
+  margin-bottom: 1lh;
+}
+
+.modal-section-title {
+  color: var(--accent);
+  margin-bottom: 0.5lh;
+}
+
+.modal-row {
+  line-height: 1.8;
+  color: var(--fg);
+}
+
+.modal-key {
+  color: var(--accent);
+  font-weight: 700;
+  display: inline-block;
+  min-width: 9ch;
+}
+
+.modal-footer {
+  text-align: center;
+  color: var(--gutter);
+  margin-top: 1lh;
+  animation: blink 1s step-end infinite;
+}
+
+@media (max-width: 720px) {
+  #modal-box {
+    padding: 1em;
+    font-size: 14px;
+  }
+  .modal-key {
+    min-width: 7ch;
+  }
 }
