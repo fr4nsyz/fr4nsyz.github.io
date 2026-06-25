@@ -26,7 +26,10 @@
     <a href="/#projects" class="tmux-win">3:INV</a>
     <a href="/#comms" class="tmux-win">4:COMMS</a>
     <a href="/blog" class="tmux-win">5:DATA</a>
-    <span class="tmux-right">fr4nsyz HUD</span>
+    <div class="tmux-right-group">
+      <div id="keys-hud" class="keys-hud">[ --- ]</div>
+      <span class="tmux-right">fr4nsyz HUD</span>
+    </div>
   </div>
   <div class="buffer">
     <div id="gutter" class="gutter" aria-hidden="true"></div>
@@ -72,6 +75,53 @@
       var lh, pt, bufTop;
       var cursorLine = 1, cursorCol = 0;
       var contentLines = 1;
+
+      var keysHud = document.getElementById('keys-hud');
+      var activeKeys = new Set();
+
+      function normalizeKey(e) {
+        if (e.key === ' ') return 'SPACE';
+        if (e.key === 'Control') return 'CTRL';
+        if (e.key === 'Shift') return 'SHIFT';
+        if (e.key === 'Alt') return 'ALT';
+        if (e.key === 'Meta') return 'CMD';
+        if (e.key === 'Escape') return 'ESC';
+        if (e.key === 'ArrowUp') return '↑';
+        if (e.key === 'ArrowDown') return '↓';
+        if (e.key === 'ArrowLeft') return '←';
+        if (e.key === 'ArrowRight') return '→';
+
+        return e.key.length === 1 ? e.key.toUpperCase() : e.key.toUpperCase();
+      }
+
+      function renderKeys() {
+        if (!keysHud) return;
+
+        if (activeKeys.size === 0) {
+          keysHud.textContent = '[ --- ]';
+          return;
+        }
+
+        keysHud.textContent = '[ ' + Array.from(activeKeys).join(' + ') + ' ]';
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.repeat) return;
+
+        activeKeys.add(normalizeKey(e));
+        renderKeys();
+      });
+
+      document.addEventListener('keyup', function (e) {
+        activeKeys.delete(normalizeKey(e));
+        renderKeys();
+      });
+
+      window.addEventListener('blur', function () {
+        activeKeys.clear();
+        renderKeys();
+      });
+
 
       var audio = (function() {
         var ctx = null;
