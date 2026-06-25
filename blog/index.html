@@ -5,6 +5,7 @@ description: "Blog posts"
 ---
 
 <h1>logs</h1>
+{% if posts %}
 <ul>
   {% for post in posts %}
   <li>
@@ -24,3 +25,6 @@ description: "Blog posts"
   </li>
   {% endfor %}
 </ul>
+{% else %}
+<p>coming soon</p>
+{% endif %}

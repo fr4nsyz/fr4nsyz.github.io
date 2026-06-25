@@ -20,12 +20,12 @@
 </head>
 <body>
   <div class="tmux-bar">
-    <span class="tmux-session">[0]</span>
-    <a href="/" class="tmux-win">0:IDX</a>
+    <span class="tmux-session">[1]</span>
     <a href="/#whoami" class="tmux-win">1:STAT</a>
     <a href="/#experience" class="tmux-win">2:PERKS</a>
     <a href="/#projects" class="tmux-win">3:INV</a>
-    <a href="/blog" class="tmux-win">4:DATA</a>
+    <a href="/#comms" class="tmux-win">4:COMMS</a>
+    <a href="/blog" class="tmux-win">5:DATA</a>
     <span class="tmux-right">fr4nsyz HUD</span>
   </div>
   <div class="buffer">
@@ -49,15 +49,20 @@
         <div class="modal-row"><span class="modal-key">_/$</span> line start / end</div>
         <div class="modal-row"><span class="modal-key">ctrl-d/u</span> half page down / up</div>
         <div class="modal-row"><span class="modal-key">y</span> click link at cursor</div>
-        <div class="modal-row"><span class="modal-key">0-4</span> switch tabs</div>
+        <div class="modal-row"><span class="modal-key">1-5</span> switch tabs</div>
       </div>
       <div class="modal-section">
         <div class="modal-section-title">> OR USE THE MOUSE</div>
         <div class="modal-row">click links, scroll, tap the tmux bar</div>
       </div>
+      <div class="modal-row" style="margin-top:1lh;">
+        experience with audio?
+        <span id="audio-toggle" class="audio-toggle" style="color:var(--gutter);cursor:pointer;">[off]</span>
+      </div>
       <div class="modal-footer">[ PRESS ENTER ]</div>
     </div>
   </div>
+  <audio id="bg-music" preload="auto" style="display:none"></audio>
   <script>
     (function() {
       var gutter = document.getElementById('gutter');
@@ -105,7 +110,15 @@
         while (el) {
           if (el.tagName === 'A') {
             audio.menu();
-            el.click();
+            var href = el.getAttribute('href');
+            var target = el.getAttribute('target');
+            if (target === '_blank' || !href || href.startsWith('http') || href.startsWith('//')) {
+              if (href && href !== '#') window.open(href, target || '_blank');
+            } else if (href.startsWith('#')) {
+              el.click();
+            } else {
+              el.dispatchEvent(new MouseEvent('click', {bubbles:true,cancelable:true}));
+            }
             return true;
           }
           el = el.parentElement;
@@ -176,6 +189,7 @@
       }
 
       function placeCursor() {
+        cursorLine = Math.min(cursorLine, contentLines);
         var maxCol = maxCursorCol();
         var col = cursorCol;
         if (col > maxCol) col = maxCol;
@@ -231,17 +245,77 @@
         }
       }
 
+      // --- Music Player ---
+      var musicTracks = [
+        "/music/psychronic-bubblegum-armageddon-548272.mp3",
+        "/music/psychronic-circuit-madness-438038.mp3",
+        "/music/u_199xuihodk-celestial-butterfly-496427.mp3"
+      ];
+      var musicEl = document.getElementById('bg-music');
+      var audioEnabled = getCookie('fr4nsyz_aud') === 'on';
+      var audioToggleEl = document.getElementById('audio-toggle');
+
+      function setAudioEnabled(val) {
+        audioEnabled = val;
+        setCookie('fr4nsyz_aud', val ? 'on' : 'off', 365);
+        if (audioToggleEl) {
+          audioToggleEl.textContent = val ? '[on]' : '[off]';
+          audioToggleEl.style.color = val ? 'var(--accent)' : 'var(--gutter)';
+        }
+      }
+
+      if (audioToggleEl) {
+        setAudioEnabled(audioEnabled);
+        audioToggleEl.addEventListener('click', function() {
+          setAudioEnabled(!audioEnabled);
+        });
+      }
+
+      function tryPlay() {
+        if (!musicEl) return;
+        musicEl.volume = 0.2;
+        var idx = Math.floor(Math.random() * musicTracks.length);
+        musicEl.src = musicTracks[idx];
+        musicEl.play().catch(function() {
+          musicEl.muted = true;
+          musicEl.play().catch(function(){});
+          var unmute = function() { musicEl.muted = false; };
+          document.addEventListener('click', unmute, {once: true});
+          document.addEventListener('keydown', unmute, {once: true});
+        });
+      }
+
+      if (musicEl) {
+        musicEl.addEventListener('ended', function() {
+          var idx = Math.floor(Math.random() * musicTracks.length);
+          musicEl.src = musicTracks[idx];
+          musicEl.play().catch(function(){});
+        });
+      }
+
+      function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? match[2] : null;
+      }
+      function setCookie(name, value, days) {
+        var d = new Date();
+        d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+        document.cookie = name + '=' + value + ';expires=' + d.toUTCString() + ';path=/';
+      }
+
       function dismissModal() {
         var m = document.getElementById('modal');
         if (!m) return;
         m.classList.add('modal-hidden');
+        setCookie('fr4nsyz_hud', 'seen', 365);
         audio.menu();
+        if (audioEnabled) tryPlay();
       }
 
       function initModal() {
         var m = document.getElementById('modal');
         if (!m) return;
-        if (window.innerWidth <= 720) {
+        if (window.innerWidth <= 720 || getCookie('fr4nsyz_hud') === 'seen') {
           m.classList.add('modal-hidden');
           return;
         }
@@ -284,6 +358,7 @@
 
       init();
       initModal();
+      if (audioEnabled && getCookie('fr4nsyz_hud') === 'seen') tryPlay();
 
       var lastKey, ggTimer;
       document.addEventListener('keydown', function(e) {
@@ -311,11 +386,26 @@
         if (e.key === 'e') { e.preventDefault(); var maxCol = maxCursorCol(); var step = Math.min(8, maxCol - cursorCol); if (step > 0) { cursorCol += step; audio.move(); placeCursor(); } return; }
         if (e.key === '_') { e.preventDefault(); cursorCol = 0; audio.move(); placeCursor(); return; }
         if (e.key === '$') { e.preventDefault(); cursorCol = maxCursorCol(); audio.move(); placeCursor(); return; }
-        if (/^[0-4]$/.test(e.key)) {
+        if (/^[1-5]$/.test(e.key)) {
+          e.preventDefault();
           audio.menu();
           var links = document.querySelectorAll('.tmux-win');
-          var idx = parseInt(e.key);
-          if (links[idx]) { e.preventDefault(); window.location.href = links[idx].getAttribute('href'); }
+          var idx = parseInt(e.key) - 1;
+          if (!links[idx]) return;
+          var href = links[idx].getAttribute('href');
+          var hashIdx = href.indexOf('#');
+          var basePath = hashIdx >= 0 ? href.slice(0, hashIdx) : href;
+          var hash = hashIdx >= 0 ? href.slice(hashIdx + 1) : '';
+          if (!basePath || basePath === window.location.pathname) {
+            if (hash) {
+              window.location.hash = '#' + hash;
+              var target = document.getElementById(hash);
+              if (target) target.scrollIntoView();
+            }
+            updateActiveTab();
+          } else {
+            spaNavigate(href);
+          }
           return;
         }
         if (e.key === 'g') {
@@ -331,8 +421,88 @@
           }
         }
       });
-      document.querySelectorAll('.tmux-win').forEach(function(a) {
-        a.addEventListener('click', audio.menu);
+      // --- SPA Router ---
+      var spaCurrentUrl = window.location.pathname + (window.location.hash || '');
+      function spaNavigate(url, force) {
+        if (!url) return;
+        var parts = url.split('#');
+        var basePath = parts[0];
+        var hash = parts[1] || '';
+
+        if (!force && url === spaCurrentUrl) {
+          if (hash) {
+            var target = document.getElementById(hash);
+            if (target) target.scrollIntoView();
+          }
+          updateActiveTab();
+          return;
+        }
+
+        if (basePath === window.location.pathname) {
+          if (hash) {
+            window.location.hash = '#' + hash;
+            spaCurrentUrl = window.location.pathname + '#' + hash;
+            updateActiveTab();
+          }
+          return;
+        }
+
+        fetch(basePath)
+          .then(function(r) { return r.text(); })
+          .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            var newMain = doc.querySelector('main');
+            var oldMain = document.querySelector('main');
+            if (newMain && oldMain) oldMain.innerHTML = newMain.innerHTML;
+
+            var newTitle = doc.querySelector('title');
+            if (newTitle) document.title = newTitle.textContent;
+
+            var newDesc = doc.querySelector('meta[name="description"]');
+            if (newDesc) {
+              var oldDesc = document.querySelector('meta[name="description"]');
+              if (oldDesc) oldDesc.setAttribute('content', newDesc.getAttribute('content'));
+            }
+
+            history.pushState(null, '', url);
+            spaCurrentUrl = url;
+
+            updateActiveTab();
+            initModal();
+            loadMetrics();
+            measureCh();
+            refreshGutter();
+            placeCursor();
+            centerView();
+            setupHints();
+
+            if (hash) {
+              var target = document.getElementById(hash);
+              if (target) target.scrollIntoView();
+            }
+          })
+          .catch(function() { window.location.href = url; });
+      }
+
+      document.addEventListener('click', function(e) {
+        var a = e.target.closest('a');
+        if (!a) return;
+        var href = a.getAttribute('href');
+        if (!href) return;
+        if (a.getAttribute('target') === '_blank' || href.startsWith('http') || href.startsWith('//') || href.startsWith('mailto:')) return;
+        if (href.startsWith('#') || href === '') return;
+        if (href.indexOf('#') > 0 && href.split('#')[0] === window.location.pathname) return;
+        e.preventDefault();
+        audio.menu();
+        spaNavigate(href);
+      });
+
+      window.addEventListener('popstate', function() {
+        var p = window.location.pathname;
+        if (p !== spaCurrentUrl.split('#')[0]) {
+          spaNavigate(p + (window.location.hash || ''), true);
+        }
       });
 
       var rt;

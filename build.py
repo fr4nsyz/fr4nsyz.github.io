@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 SITE_DIR = "_site"
 POSTS_DIR = "_posts"
 LAYOUTS_DIR = "_layouts"
-STATIC_DIRS = ["css", "fonts", "js"]
+STATIC_DIRS = ["css", "fonts", "js", "music"]
 
 env = Environment(loader=FileSystemLoader(LAYOUTS_DIR), autoescape=select_autoescape())
 
@@ -41,58 +41,59 @@ def build():
         shutil.rmtree(SITE_DIR)
 
     posts = []
-    for fname in sorted(os.listdir(POSTS_DIR)):
-        if not fname.endswith((".md", ".markdown")):
-            continue
-        with open(os.path.join(POSTS_DIR, fname)) as f:
-            fm, body = parse_front_matter(f.read())
+    if os.path.exists(POSTS_DIR):
+        for fname in sorted(os.listdir(POSTS_DIR)):
+            if not fname.endswith((".md", ".markdown")):
+                continue
+            with open(os.path.join(POSTS_DIR, fname)) as f:
+                fm, body = parse_front_matter(f.read())
 
-        html_body = md.convert(body)
-        slug = slug_from_filename(fname)
-        url = f"/blog/{slug}/"
-        dt = fm.get("date")
-        if isinstance(dt, datetime):
-            date_obj = dt
-        elif isinstance(dt, date_type):
-            date_obj = datetime(dt.year, dt.month, dt.day)
-        elif isinstance(dt, str):
-            date_obj = datetime.strptime(dt, "%Y-%m-%d")
-        else:
-            date_obj = datetime.now()
+            html_body = md.convert(body)
+            slug = slug_from_filename(fname)
+            url = f"/blog/{slug}/"
+            dt = fm.get("date")
+            if isinstance(dt, datetime):
+                date_obj = dt
+            elif isinstance(dt, date_type):
+                date_obj = datetime(dt.year, dt.month, dt.day)
+            elif isinstance(dt, str):
+                date_obj = datetime.strptime(dt, "%Y-%m-%d")
+            else:
+                date_obj = datetime.now()
 
-        post = {
-            "title": fm.get("title", "Untitled"),
-            "description": fm.get("description", ""),
-            "date_xml": date_obj.strftime("%Y-%m-%dT00:00:00+00:00"),
-            "date_formatted": date_obj.strftime("%B %d, %Y"),
-            "tags": fm.get("tags", []),
-            "url": url,
-        }
+            post = {
+                "title": fm.get("title", "Untitled"),
+                "description": fm.get("description", ""),
+                "date_xml": date_obj.strftime("%Y-%m-%dT00:00:00+00:00"),
+                "date_formatted": date_obj.strftime("%B %d, %Y"),
+                "tags": fm.get("tags", []),
+                "url": url,
+            }
 
-        content = render_page(
-            html_body,
-            "post",
-            page_title=post["title"],
-            description=post["description"],
-            page_url=url,
-            date_xml=post["date_xml"],
-            date_formatted=post["date_formatted"],
-            tags=post["tags"],
-        )
-        content = render_page(
-            content,
-            "default",
-            page_title=post["title"],
-            description=post["description"],
-            page_url=url,
-        )
+            content = render_page(
+                html_body,
+                "post",
+                page_title=post["title"],
+                description=post["description"],
+                page_url=url,
+                date_xml=post["date_xml"],
+                date_formatted=post["date_formatted"],
+                tags=post["tags"],
+            )
+            content = render_page(
+                content,
+                "default",
+                page_title=post["title"],
+                description=post["description"],
+                page_url=url,
+            )
 
-        out_dir = os.path.join(SITE_DIR, "blog", slug)
-        os.makedirs(out_dir, exist_ok=True)
-        with open(os.path.join(out_dir, "index.html"), "w") as f:
-            f.write(content)
+            out_dir = os.path.join(SITE_DIR, "blog", slug)
+            os.makedirs(out_dir, exist_ok=True)
+            with open(os.path.join(out_dir, "index.html"), "w") as f:
+                f.write(content)
 
-        posts.append(post)
+            posts.append(post)
 
     posts.reverse()
 

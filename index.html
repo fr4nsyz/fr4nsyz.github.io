@@ -154,4 +154,46 @@ description: "just another void pointer"
       </li>
     </ul>
   </section>
+
+  <section id="comms">
+    <h2>comms</h2>
+    <br/>
+    <ul>
+      <li>
+        <a href="https://github.com/fr4nsyz" target="_blank" rel="noopener noreferrer">
+          <strong>github</strong>
+        </a>
+      </li>
+      <li>
+        <a href="https://www.linkedin.com/in/francois-coleongco/" target="_blank" rel="noopener noreferrer">
+          <strong>linkedin</strong>
+        </a>
+      </li>
+      <li>
+        <a href="https://x.com/fr4nsyz" target="_blank" rel="noopener noreferrer">
+          <strong>X</strong>
+        </a>
+      </li>
+      <li>
+        <a href="https://devpost.com/Francois-Coleongco" target="_blank" rel="noopener noreferrer">
+          <strong>devpost</strong>
+        </a>
+      </li>
+      <li>
+        <a href="#" id="discord-link" onclick="event.preventDefault();copyDiscord();return false;">
+          <strong>discord</strong>
+        </a>
+        <span id="discord-msg" style="color:var(--gutter);font-size:0.85em;margin-left:1ch;"></span>
+      </li>
+    </ul>
+  </section>
 </section>
+
+<script>
+function copyDiscord() {
+  navigator.clipboard.writeText('fr4nsyz').then(function() {
+    var el = document.getElementById('discord-msg');
+    if (el) { el.textContent = '\u2713 copied'; setTimeout(function(){el.textContent='';},2000); }
+  });
+}
+</script>
