@@ -283,7 +283,7 @@ blockquote {
   .tmux-right { font-size: 0.75em; }
   #hint { display: none; }
   .whoami-grid { flex-direction: column; }
-  .whoami-art { font-size: 6px; max-width: 100%; }
+  .whoami-art { font-size: 2px; max-width: 20%; }
 }
 
 hr {
