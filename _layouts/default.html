@@ -363,7 +363,7 @@
       function initModal() {
         var m = document.getElementById('modal');
         if (!m) return;
-        if (window.innerWidth <= 720 || getCookie('fr4nsyz_hud') === 'seen') {
+        if (getCookie('fr4nsyz_hud') === 'seen') {
           m.classList.add('modal-hidden');
           return;
         }
