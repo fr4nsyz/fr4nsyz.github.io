@@ -170,6 +170,7 @@ h2 { margin-top: 1lh; }
 }
 
 .whoami-art {
+  scrollbar-width: none;
   flex-shrink: 0;
   font-size: 10px;
   line-height: 1.1;
@@ -283,7 +284,7 @@ blockquote {
   .tmux-right { font-size: 0.75em; }
   #hint { display: none; }
   .whoami-grid { flex-direction: column; }
-  .whoami-art { font-size: 2px; max-width: 20%; }
+  .whoami-art { font-size: 2px; max-width: 100%; }
 }
 
 hr {
