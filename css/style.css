@@ -176,7 +176,7 @@ h2 { margin-top: 1lh; }
   line-height: 1.1;
   background: none !important;
   border: none !important;
-  padding: 0;
+  padding: 0 4ch 0 0;
   margin: 0;
   color: var(--gutter);
 }
@@ -420,4 +420,16 @@ img {
   font-size: 0.8rem;
   white-space: nowrap;
   user-select: none;
+}
+
+.twinkle {
+  display: inline-block;
+  animation: twinkle 1.2s ease-in-out infinite alternate;
+}
+.twinkle:nth-child(2n) { animation-delay: -0.4s; }
+.twinkle:nth-child(3n) { animation-delay: -0.8s; }
+.twinkle:nth-child(5n) { animation-delay: -0.2s; }
+@keyframes twinkle {
+  0%   { opacity: 0.2; transform: scale(0.6); }
+  100% { opacity: 1;   transform: scale(1.1); }
 }

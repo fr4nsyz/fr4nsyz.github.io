@@ -62,7 +62,7 @@
         experience with audio?
         <span id="audio-toggle" class="audio-toggle" style="color:var(--gutter);cursor:pointer;">[off]</span>
       </div>
-      <div class="modal-footer">[ PRESS ENTER ]</div>
+      <div class="modal-footer" id="modal-footer" style="cursor:pointer;">[ PRESS ENTER ]</div>
     </div>
   </div>
   <audio id="bg-music" preload="auto" style="display:none"></audio>
@@ -406,6 +406,7 @@
 
       init();
       initModal();
+      document.getElementById('modal-footer')?.addEventListener('click', dismissModal);
       if (audioEnabled && getCookie('fr4nsyz_hud') === 'seen') tryPlay();
 
       var lastKey, ggTimer;
