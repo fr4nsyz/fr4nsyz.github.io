@@ -181,6 +181,8 @@ h2 { margin-top: 1lh; }
   color: var(--gutter);
 }
 
+.twinkle-star { color: var(--accent); }
+
 h1::before, h2::before {
   content: '> ';
   color: var(--accent);
