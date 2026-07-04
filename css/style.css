@@ -207,6 +207,11 @@ ul {
   margin: 0;
 }
 
+ol {
+  padding-left: 3ch;
+  margin: 1lh 0;
+}
+
 li {
   margin: 0;
 }
@@ -257,6 +262,9 @@ pre {
   margin: 1lh 0;
   border-radius: 3px;
   border: 1px solid #3a2a0f;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 pre code {
@@ -293,6 +301,24 @@ hr {
   border: none;
   border-top: 1px solid #3a2a0f;
   margin: 1lh 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1lh 0;
+}
+
+th, td {
+  border: 1px solid var(--gutter);
+  padding: 0.4em 0.8em;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 img {

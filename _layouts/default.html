@@ -503,7 +503,20 @@
             var doc = parser.parseFromString(html, 'text/html');
             var newMain = doc.querySelector('main');
             var oldMain = document.querySelector('main');
-            if (newMain && oldMain) oldMain.innerHTML = newMain.innerHTML;
+            if (newMain && oldMain) {
+              var scripts = newMain.querySelectorAll('script');
+              var scriptContents = [];
+              scripts.forEach(function(s) { scriptContents.push(s.textContent); });
+              oldMain.innerHTML = newMain.innerHTML;
+              scriptContents.forEach(function(code) {
+                if (code) {
+                  var ns = document.createElement('script');
+                  ns.textContent = code;
+                  document.body.appendChild(ns);
+                  document.body.removeChild(ns);
+                }
+              });
+            }
 
             var newTitle = doc.querySelector('title');
             if (newTitle) document.title = newTitle.textContent;

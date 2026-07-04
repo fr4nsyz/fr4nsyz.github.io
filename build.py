@@ -11,7 +11,7 @@ STATIC_DIRS = ["css", "fonts", "js", "music"]
 
 env = Environment(loader=FileSystemLoader(LAYOUTS_DIR), autoescape=select_autoescape())
 
-md = markdown.Markdown(extensions=["fenced_code", "codehilite"])
+md = markdown.Markdown(extensions=["fenced_code", "codehilite", "tables"])
 
 
 def parse_front_matter(text):
@@ -97,6 +97,8 @@ def build():
 
     posts.reverse()
 
+    all_tags = sorted(set(tag for p in posts for tag in p.get("tags", [])))
+
     pages = [
         (
             "index.html",
@@ -106,7 +108,12 @@ def build():
         (
             "blog/index.html",
             "/blog/",
-            {"page_title": "Blog", "description": "Blog posts", "posts": posts},
+            {
+                "page_title": "Blog",
+                "description": "Blog posts",
+                "posts": posts,
+                "all_tags": all_tags,
+            },
         ),
     ]
 
@@ -119,6 +126,7 @@ def build():
             "description": extra_vars.get("description"),
             "page_url": url,
             "posts": extra_vars.get("posts", []),
+            "all_tags": extra_vars.get("all_tags", []),
         }
         body_tmpl = env.from_string(body)
         rendered = body_tmpl.render(**ctx)
