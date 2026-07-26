@@ -11,7 +11,7 @@ STATIC_DIRS = ["css", "fonts", "js", "music", "img"]
 
 env = Environment(loader=FileSystemLoader(LAYOUTS_DIR), autoescape=select_autoescape())
 
-md = markdown.Markdown(extensions=["fenced_code", "codehilite", "tables"])
+md = markdown.Markdown(extensions=["fenced_code", "codehilite", "tables", "attr_list"])
 
 
 def parse_front_matter(text):
