@@ -5,21 +5,21 @@ description: "i don't expect anyone to get this fully unless they know a bit abo
 tags: [DATA, poetry]
 ---
 
-i feel like i'm living on borrowed time<br>
-in a `register` built by hands of mine<br>
-hoping that i won't be `overwritten`<br>
-from the `memory` i relive and the `memory` i sit in<br>
-<br>
-i wish i'd be written to `persistent` store<br>
-but the `kernel` decided i'm not worth it anymore<br>
-<br>
-and so i sit in `%RAX`<br>
-fearing the `pointer` to that which comes next<br>
-<br>
-what was i part of? was i even of use?<br>
-`compiled` to something that should wear a noose?<br>
-<br>
-`declared`, not `defined`<br>
-not `used`, not `assigned`<br>
-<br>
-sometimes i wish i was `optimized away`. it'd make the `program` less noisy.<br>
+v srry yvxr v'z yvivat ba obeebjrq gvzr<oe>
+va n `ertvfgre` ohvyg ol unaqf bs zvar<oe>
+ubcvat gung v jba'g or `birejevggra`<oe>
+sebz gur `zrzbel` v eryvir naq gur `zrzbel` v fvg va<oe>
+<oe>
+v jvfu v'q or jevggra gb `crefvfgrag` fgber<oe>
+ohg gur `xreary` qrpvqrq v'z abg jbegu vg nalzber<oe>
+<oe>
+naq fb v fvg va `%ENK`<oe>
+srnevat gur `cbvagre` gb gung juvpu pbzrf arkg<oe>
+<oe>
+jung jnf v cneg bs? jnf v rira bs hfr?<oe>
+`pbzcvyrq` gb fbzrguvat gung fubhyq jrne n abbfr?<oe>
+<oe>
+`qrpynerq`, abg `qrsvarq`<oe>
+abg `hfrq`, abg `nffvtarq`<oe>
+<oe>
+fbzrgvzrf v jvfu v jnf `bcgvzvmrq njnl`. vg'q znxr gur `cebtenz` yrff abvfl.<oe>

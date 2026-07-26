@@ -5,49 +5,49 @@ description: "a variable getting right-shifted into oblivion"
 tags: [DATA, poetry]
 ---
 
-32 `bits`, 32 times<br>
-32 moments that serve to remind<br>
-of a `value`, of meaning, one of a kind<br>
-it was `shifted` away til its end was nigh<br>
-<br>
-a torturous process<br>
-from ends to inner<br>
-i was pushed left and right<br>
-padded with `zero`<br>
-<br>
-bit by bit<br>
-i watched my bits shift<br>
-<br>
-lost one,<br>
-no two,<br>
-no four,<br>
-it's eight.<br>
-<br>
-24 `bits`, 24 times<br>
-24 moments that serve to remind<br>
-that i can still try<br>
-to go on despite<br>
-the slight `corruption`<br>
-it should be alright<br>
-<br>
-bit by bit<br>
-i watched my bits shift<br>
-<br>
-lost two,<br>
-no four,<br>
-no eight,<br>
-it's sixteen.<br>
-<br>
-8 `bits`, 8 times<br>
-8 little moments that serve to remind<br>
-that there's only a fourth<br>
-you've one chance left<br>
-to be a `non-zero`<br>
-and not a dark `mask`<br>
-<br>
-but the pattern shifts when the count runs thin<br>
-the `mask` pulls tight, there's no room to begin<br>
-<br>
-there's near nothing left<br>
-there's near nothing right<br>
-i'd ask for a `1` but it wouldn't be `right`<br>
+32 `ovgf`, 32 gvzrf<oe>
+32 zbzragf gung freir gb erzvaq<oe>
+bs n `inyhr`, bs zrnavat, bar bs n xvaq<oe>
+vg jnf `fuvsgrq` njnl gvy vgf raq jnf avtu<oe>
+<oe>
+n gbeghebhf cebprff<oe>
+sebz raqf gb vaare<oe>
+v jnf chfurq yrsg naq evtug<oe>
+cnqqrq jvgu `mreb`<oe>
+<oe>
+ovg ol ovg<oe>
+v jngpurq zl ovgf fuvsg<oe>
+<oe>
+ybfg bar,<oe>
+ab gjb,<oe>
+ab sbhe,<oe>
+vg'f rvtug.<oe>
+<oe>
+24 `ovgf`, 24 gvzrf<oe>
+24 zbzragf gung freir gb erzvaq<oe>
+gung v pna fgvyy gel<oe>
+gb tb ba qrfcvgr<oe>
+gur fyvtug `pbeehcgvba`<oe>
+vg fubhyq or nyevtug<oe>
+<oe>
+ovg ol ovg<oe>
+v jngpurq zl ovgf fuvsg<oe>
+<oe>
+ybfg gjb,<oe>
+ab sbhe,<oe>
+ab rvtug,<oe>
+vg'f fvkgrra.<oe>
+<oe>
+8 `ovgf`, 8 gvzrf<oe>
+8 yvggyr zbzragf gung freir gb erzvaq<oe>
+gung gurer'f bayl n sbhegu<oe>
+lbh'ir bar punapr yrsg<oe>
+gb or n `aba-mreb`<oe>
+naq abg n qnex `znfx`<oe>
+<oe>
+ohg gur cnggrea fuvsgf jura gur pbhag ehaf guva<oe>
+gur `znfx` chyyf gvtug, gurer'f ab ebbz gb ortva<oe>
+<oe>
+gurer'f arne abguvat yrsg<oe>
+gurer'f arne abguvat evtug<oe>
+v'q nfx sbe n `1` ohg vg jbhyqa'g or `evtug`<oe>

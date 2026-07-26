@@ -200,7 +200,7 @@
 
       function getContentLines() {
         var main = document.querySelector('main');
-        return Math.max(1, Math.round((main ? main.offsetHeight : 1) / lh));
+        return Math.max(1, Math.ceil((main ? main.offsetHeight : 1) / lh));
       }
 
       function getBufTop() {
@@ -212,7 +212,7 @@
         var buf = document.querySelector('.buffer');
         var vh = window.innerHeight;
         var totalHeight = Math.max(buf.scrollHeight, vh);
-        var totalLines = Math.ceil(totalHeight / lh);
+        var totalLines = Math.ceil(totalHeight / lh) + 2;
         contentLines = getContentLines();
 
         var out = [];
@@ -291,6 +291,21 @@
           document.fonts.ready.then(function() {
             measureCh();
             placeCursor();
+          });
+        }
+        if (typeof ResizeObserver !== 'undefined') {
+          var mainObs = new ResizeObserver(function() {
+            refreshGutter();
+            placeCursor();
+          });
+          mainObs.observe(document.querySelector('main'));
+        } else {
+          document.querySelectorAll('main img').forEach(function(img) {
+            if (img.complete) return;
+            img.addEventListener('load', function() {
+              refreshGutter();
+              placeCursor();
+            });
           });
         }
       }

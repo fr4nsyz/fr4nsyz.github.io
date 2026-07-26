@@ -5,19 +5,19 @@ description: "i need a spin lock"
 tags: [DATA, poetry]
 ---
 
-I cannot give what I don't have<br>
-`permission` to live the life you have halved<br>
-<br>
-i tried to escape and doors seemed aplenty<br>
-but rules are rigid, `nil` and unbending<br>
-<br>
-while the rest have idled their time in the `kernel`<br>
-i scowl in pain, in rage, eternal<br>
-<br>
-contention's not kind on this hellish machine<br>
-i'd waited and waited for completion, unseen<br>
-<br>
-I just need one chance<br>
-a chance to be `free()`<br>
-of all my `memory`<br>
-my `leaks` and misery<br>
+V pnaabg tvir jung V qba'g unir<oe>
+`crezvffvba` gb yvir gur yvsr lbh unir unyirq<oe>
+<oe>
+v gevrq gb rfpncr naq qbbef frrzrq ncyragl<oe>
+ohg ehyrf ner evtvq, `avy` naq haoraqvat<oe>
+<oe>
+juvyr gur erfg unir vqyrq gurve gvzr va gur `xreary`<oe>
+v fpbjy va cnva, va entr, rgreany<oe>
+<oe>
+pbagragvba'f abg xvaq ba guvf uryyvfu znpuvar<oe>
+v'q jnvgrq naq jnvgrq sbe pbzcyrgvba, hafrra<oe>
+<oe>
+V whfg arrq bar punapr<oe>
+n punapr gb or `serr()`<oe>
+bs nyy zl `zrzbel`<oe>
+zl `yrnxf` naq zvfrel<oe>

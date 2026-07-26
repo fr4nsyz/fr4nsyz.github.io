@@ -324,6 +324,7 @@ th {
 img {
   max-width: 100%;
   opacity: 0.85;
+  display: block;
 }
 
 ::selection {
