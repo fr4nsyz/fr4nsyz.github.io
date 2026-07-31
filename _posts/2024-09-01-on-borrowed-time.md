@@ -1,7 +1,7 @@
 ---
 title: "on borrowed time"
 date: 2024-09-01
-description: "i don't expect anyone to get this fully unless they know a bit about CPU architecture"
+description: "prereq: some cpu architecture"
 tags: [DATA, poetry]
 ---
 
