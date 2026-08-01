@@ -502,7 +502,7 @@
           return;
         }
 
-        if (basePath === window.location.pathname) {
+        if (!force && basePath === window.location.pathname) {
           if (hash) {
             window.location.hash = '#' + hash;
             spaCurrentUrl = window.location.pathname + '#' + hash;
@@ -542,7 +542,11 @@
               if (oldDesc) oldDesc.setAttribute('content', newDesc.getAttribute('content'));
             }
 
-            history.pushState(null, '', url);
+            if (force) {
+              history.replaceState(null, '', url);
+            } else {
+              history.pushState(null, '', url);
+            }
             spaCurrentUrl = url;
 
             updateActiveTab();
