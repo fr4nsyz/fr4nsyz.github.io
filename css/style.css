@@ -26,7 +26,9 @@ body {
 
 .buffer {
   position: relative;
-  padding: 0 0 2em 9ch;
+  max-width: 80ch;
+  margin: 0 auto;
+  padding: 0 2ch 2em 9ch;
   min-height: calc(100vh - 2em);
 }
 
@@ -158,26 +160,19 @@ h1, h2, h3, h4, h5, h6 {
 
 h2 { margin-top: 1lh; }
 
-.whoami-grid {
-  display: flex;
-  gap: 2em;
-  align-items: flex-start;
-}
-
 .whoami-text {
-  flex: 1;
-  min-width: 0;
+  overflow: hidden;
 }
 
 .whoami-art {
+  float: right;
   scrollbar-width: none;
-  flex-shrink: 0;
-  font-size: 10px;
+  font-size: 7px;
   line-height: 1.1;
   background: none !important;
   border: none !important;
-  padding: 0 4ch 0 0;
-  margin: 0;
+  padding: 0;
+  margin: 0 0 1em 2em;
   color: var(--gutter);
 }
 
@@ -282,7 +277,7 @@ blockquote {
 @media (max-width: 720px) {
   html { font-size: 15px; }
   .gutter, #cursor { display: none; }
-  .buffer { padding: 0.2em 0 0 1em; }
+  .buffer { padding: 0.2em 0.6em 0 1em; }
   .tmux-bar {
     font-size: 14px;
     flex-wrap: wrap;
@@ -293,8 +288,13 @@ blockquote {
   .tmux-session { font-size: 0.85em; }
   .tmux-right { font-size: 0.75em; }
   #hint { display: none; }
-  .whoami-grid { flex-direction: column; }
-  .whoami-art { font-size: 2px; max-width: 100%; }
+  .whoami-art {
+    float: none;
+    width: fit-content;
+    margin: 1em auto;
+    font-size: 2px;
+    max-width: 100%;
+  }
 }
 
 hr {
