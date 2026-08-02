@@ -98,7 +98,6 @@
       var lh, pt, bufTop;
       var cursorLine = 1, cursorCol = 0;
       var contentLines = 1;
-      var lines = [];
 
       var keysHud = document.getElementById('keys-hud');
       var activeKeys = new Set();
@@ -232,56 +231,12 @@
         return buf.getBoundingClientRect().top + window.scrollY;
       }
 
-      function buildLines() {
-        var out = [];
-        var main = document.querySelector('main');
-        if (!main || !document.caretPositionFromPoint && !document.caretRangeFromPoint) return out;
-        var walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
-        var node;
-        var frags = [];
-        while ((node = walker.nextNode())) {
-          if (!node.nodeValue || !node.nodeValue.trim()) continue;
-          var range = document.createRange();
-          range.selectNodeContents(node);
-          var rects = range.getClientRects();
-          for (var i = 0; i < rects.length; i++) {
-            var r = rects[i];
-            if (r.width <= 0 || r.height <= 0) continue;
-            var y = r.top + r.height / 2;
-            var sc = caretAt(r.left + 1, y);
-            var ec = caretAt(r.right - 1, y);
-            if (!sc || sc.node !== node || !ec || ec.node !== node) continue;
-            var text = node.nodeValue.slice(sc.offset, ec.offset);
-            if (!text.trim()) continue;
-            frags.push({ top: r.top + window.scrollY, left: r.left, text: text });
-          }
-        }
-        frags.sort(function(a, b) { return a.top - b.top || a.left - b.left; });
-        for (var j = 0; j < frags.length; j++) {
-          var f = frags[j];
-          var line = null;
-          for (var k = 0; k < out.length; k++) {
-            if (Math.abs(out[k].top - f.top) < 2) { line = out[k]; break; }
-          }
-          if (!line) {
-            line = { top: f.top, left: f.left, text: f.text };
-            out.push(line);
-          } else {
-            if (f.left < line.left) line.left = f.left;
-            line.text += f.text;
-          }
-        }
-        out.sort(function(a, b) { return a.top - b.top; });
-        return out;
-      }
-
       function refreshGutter() {
         var buf = document.querySelector('.buffer');
         var vh = window.innerHeight;
         var totalHeight = Math.max(buf.scrollHeight, vh);
         var totalLines = Math.ceil(totalHeight / lh) + 2;
-        lines = buildLines();
-        contentLines = lines.length > 0 ? lines.length : getContentLines();
+        contentLines = getContentLines();
 
         var out = [];
         for (var i = 1; i <= totalLines; i++) {
@@ -313,10 +268,7 @@
         if (col > maxCol) col = maxCol;
         var buf = document.querySelector('.buffer');
         var padLeft = parseFloat(getComputedStyle(buf).paddingLeft) || 0;
-        var topPx = (lines.length && cursorLine >= 1)
-          ? (lines[cursorLine - 1].top - getBufTop())
-          : ((cursorLine - 1) * lh);
-        cursorEl.style.top = topPx + 'px';
+        cursorEl.style.top = ((cursorLine - 1) * lh) + 'px';
         cursorEl.style.left = (padLeft + col * chPx) + 'px';
       }
 
@@ -324,9 +276,7 @@
         var vh = window.innerHeight;
         var dh = document.body.scrollHeight;
         var bufTop = getBufTop();
-        var cursorY = (lines.length && cursorLine >= 1)
-          ? (lines[cursorLine - 1].top + pt)
-          : (bufTop + (cursorLine - 1) * lh + pt);
+        var cursorY = bufTop + (cursorLine - 1) * lh + pt;
         var target = cursorY - vh / 2 + lh / 2;
         target = Math.max(0, Math.min(target, dh - vh));
         window.scrollTo({ top: Math.round(target) });
@@ -362,6 +312,42 @@
           return r ? { node: r.startContainer, offset: r.startOffset } : null;
         }
         return null;
+      }
+
+      function offsetInBlock(block, caret) {
+        var r = document.createRange();
+        r.setStart(block, 0);
+        r.setEnd(caret.node, caret.offset);
+        return r.toString().length;
+      }
+
+      function lineTextAt(x, y) {
+        var c = caretAt(x, y);
+        if (!c) return null;
+        var el = c.node.nodeType === 1 ? c.node : c.node.parentNode;
+        var block = el;
+        while (block && block !== document.body) {
+          var cs = getComputedStyle(block);
+          if (cs.display === 'block' || cs.display === 'list-item') break;
+          block = block.parentNode;
+        }
+        if (!block || block === document.body) return null;
+        var range = document.createRange();
+        range.selectNodeContents(block);
+        var rects = range.getClientRects();
+        var rect = null;
+        for (var i = 0; i < rects.length; i++) {
+          var rr = rects[i];
+          if (rr.width > 0 && y >= rr.top && y <= rr.bottom) { rect = rr; break; }
+        }
+        if (!rect) return null;
+        var s = caretAt(rect.left + 1, y);
+        var en = caretAt(rect.right - 1, y);
+        if (!s || !en) return null;
+        var text = block.textContent;
+        var start = Math.max(0, Math.min(offsetInBlock(block, s), text.length));
+        var end = Math.max(start, Math.min(offsetInBlock(block, en), text.length));
+        return { text: text.slice(start, end), rect: rect };
       }
 
       function nextWordStart(text, col) {
@@ -400,21 +386,13 @@
         return j - 1;
       }
 
-      function lineIndexAt(docY) {
-        var best = 0;
-        var bestDist = Infinity;
-        for (var i = 0; i < lines.length; i++) {
-          var d = Math.abs(lines[i].top - docY);
-          if (d < bestDist) { bestDist = d; best = i; }
-        }
-        return best;
-      }
-
       function placeCursorAt(newX, newY) {
         var buf = document.querySelector('.buffer');
         var bufRect = buf.getBoundingClientRect();
         var padLeft = parseFloat(getComputedStyle(buf).paddingLeft) || 0;
-        cursorLine = lineIndexAt(newY + window.scrollY) + 1;
+        var topPx = (newY + window.scrollY) - getBufTop() - pt;
+        var line = Math.floor(topPx / lh) + 1;
+        cursorLine = Math.max(1, Math.min(line, contentLines));
         var col = Math.round((newX - bufRect.left - padLeft) / chPx);
         cursorCol = Math.max(0, Math.min(col, maxCursorCol()));
         placeCursor();
@@ -425,17 +403,17 @@
         var cr = cursorEl.getBoundingClientRect();
         var x = cr.left + 1;
         var y = cr.top + cr.height / 2;
-        if (lines.length < 1) return false;
-        var line = lines[lineIndexAt(y + window.scrollY)];
-        var text = line.text;
+        var info = lineTextAt(x, y);
+        if (!info) return false;
+        var text = info.text;
         var n = text.length;
-        var col = Math.max(0, Math.min(Math.round((x - line.left) / chPx), n));
+        var col = Math.max(0, Math.min(Math.round((cr.left - info.rect.left) / chPx), n));
         var newCol;
         if (dir === 1) newCol = nextWordStart(text, col);
         else if (dir === -1) newCol = prevWordStart(text, col);
         else newCol = wordEnd(text, col);
         if (newCol == null || newCol === col) return false;
-        placeCursorAt(line.left + newCol * chPx, y);
+        placeCursorAt(info.rect.left + newCol * chPx, info.rect.top + info.rect.height / 2);
         return true;
       }
 
@@ -445,14 +423,9 @@
         measureCh();
         refreshGutter();
         var vh = window.innerHeight;
-        var midY = window.scrollY + vh / 2;
-        if (lines.length > 0) {
-          cursorLine = lineIndexAt(midY) + 1;
-        } else {
-          var viewLines = Math.floor(vh / lh);
-          cursorLine = Math.min(Math.floor(viewLines / 2), contentLines);
-          if (cursorLine < 1) cursorLine = 1;
-        }
+        var viewLines = Math.floor(vh / lh);
+        cursorLine = Math.min(Math.floor(viewLines / 2), contentLines);
+        if (cursorLine < 1) cursorLine = 1;
         cursorCol = 0;
         placeCursor();
         centerView();
@@ -603,7 +576,9 @@
         if (!target) return;
         var heading = target.querySelector('h1, h2, h3, h4, h5, h6') || target;
         var headingY = heading.getBoundingClientRect().top + window.scrollY;
-        gotoLine(lines.length > 0 ? lineIndexAt(headingY - pt) + 1 : Math.max(1, Math.round((headingY - bufY - pt) / lh) + 1));
+        var bufY = buf.getBoundingClientRect().top + window.scrollY;
+        var lineNum = Math.max(1, Math.round((headingY - bufY - pt) / lh) + 1);
+        gotoLine(lineNum);
       });
 
       init();
