@@ -1,19 +1,17 @@
 ---
-title: "Fixing a deadlock in a 24k-star Kubernetes project. Here's how I did it."
+title: "Fixing a deadlock in a 24k-star Kubernetes CNI. Here's how I did it."
 date: 2026-08-01
 description: "what a lovely way to spend the weekend"
-tags: [writeup, Go, Kubernetes, Networks]
+tags: [writeup, Go, Kubernetes, Open Source, Networks]
 ---
 
 
+![cilium-merged](/img/cilium-merged.jpeg){ width="1000" }
+
+The CNI is Cilium. The deadlock was in multi-pool IPAM. And it was crash-looping clusters from 1.17 to 1.20.
+
 
 ```
-level=info  msg="Initializing MultiPool IPAM" module=agent.controlplane.ipam
-level=info  msg="Restored router address from node_config" ipv4=192.168.16.45 module=agent.controlplane.agent-infra-endpoints
-level=warn  msg="Unable to restore router IP from filesystem" error="unable to reserve IP 192.168.16.45 from pool \"hrz\" (family ipv4): pool not (yet) available" ipAddr=192.168.16.45 module=agent.controlplane.agent-infra-endpoints
-level=warn  msg="Router IP could not be re-allocated. Need to re-allocate. This will cause brief network disruption" module=agent.controlplane.agent-infra-endpoints
-level=error msg="Start hook failed" error="daemon configuration failed: failed to allocate router IPs: unable to allocate router IP for family ipv4: unable to allocate from pool \"hrz\" (family ipv4): pool not (yet) available" function="cmd.daemonLegacyInitialization.func1"
-level=error msg="Failed to start hive" error="daemon configuration failed: failed to allocate router IPs: unable to allocate router IP for family ipv4: unable to allocate from pool \"hrz\" (family ipv4): pool not (yet) available"
 level=fatal msg="unable to run agent: failed to start: daemon configuration failed: failed to allocate router IPs: unable to allocate router IP for family ipv4: unable to allocate from pool \"hrz\" (family ipv4): pool not (yet) available" subsys=daemon
 ```
 

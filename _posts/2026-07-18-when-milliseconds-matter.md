@@ -2,7 +2,7 @@
 title: "When Miliseconds Matter"
 date: 2026-07-18
 description: "man i don't have enough context switches to spare"
-tags: [writeup, linux, eBPF, observability, booooringgg, notReallyThough]
+tags: [writeup, linux, eBPF, observability]
 ---
 
 ![falco-logs](/img/falco-logs.png){ width="500" }
