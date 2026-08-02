@@ -51,14 +51,14 @@ description: "just another void pointer"
 #########++++++##########################################+++++-#+++--+++++
 #######+++++++++#########################################++++++##++--+++++</pre>
       <p>
-        Hi, I'm Francois, an Honors computer science student based in Canada. My main focuses are on systems programming and security engineering, and the intersection of these fields with AI.
+        Hello! I'm Francois, nice to meet you. I'm an Honors computer science student. My main focuses are on systems programming and security engineering, and the intersection of these fields with AI.
       </p>
       <p>
         I like working close to the machine: network programming, operating systems, distributed systems.
         As such, I've built various projects around these topics which you can find <a href="#projects">here</a>.
       </p>
       <p>
-        Outside of work and personal projects, I also contribute to open source! Check out my GitHub :)
+        Outside of work and personal projects, I also contribute to open source! See <a href="#opensource">here</a> :)
       </p>
   </div>
 
@@ -106,9 +106,9 @@ description: "just another void pointer"
           <strong>KernelHarbor</strong>
         </a>
         <br/>
-        <span>Linux kernel security monitoring with eBPF and AI-powered threat detection analysis.</span>
+        <span>Linux kernel security monitoring with eBPF and AI-powered threat detection analysis. Built in collaboration with engineers from TrendAI and AMD</span>
         <br/>
-        <span class="tag">Go</span> <span class="tag">eBPF</span> <span class="tag">security</span> <span class="tag">AI</span>
+        <span class="tag">Go</span> <span class="tag">C</span> <span class="tag">eBPF</span> <span class="tag">security</span> <span class="tag">AI</span>
       </li>
       <li>
         <a href="https://github.com/fr4nsyz/LoadBalancer" target="_blank" rel="noopener noreferrer">
@@ -118,15 +118,6 @@ description: "just another void pointer"
         <span>Thread-safe HTTP load balancer with session persistence and Redis-backed cookie-based balancing.</span>
         <br/>
         <span class="tag">Go</span> <span class="tag">networking</span> <span class="tag">load-balancer</span> <span class="tag">thread-safe</span>
-      </li>
-      <li>
-        <a href="https://github.com/fr4nsyz/datascale" target="_blank" rel="noopener noreferrer">
-          <strong>datascale -- Hack Canada 2026 Winner</strong>
-        </a>
-        <br/>
-        <span>AI-assisted dataset annotation platform that runs entirely within your Tailnet for private team collaboration.</span>
-        <br/>
-        <span class="tag">TypeScript</span> <span class="tag">AI</span> <span class="tag">tailnet</span> <span class="tag">annotation</span>
       </li>
       <li>
         <a href="https://github.com/fr4nsyz/MEFSC" target="_blank" rel="noopener noreferrer">
@@ -167,6 +158,31 @@ description: "just another void pointer"
     </ul>
   </section>
 
+  <section id="hackathons">
+    <h2>hackathons</h2>
+    <br/>
+    <ul>
+      <li>
+        <a href="https://github.com/fr4nsyz/datascale" target="_blank" rel="noopener noreferrer">
+          <strong>datascale -- Hack Canada 2026 Winner</strong>
+        </a>
+        <br/>
+        <span>AI-assisted dataset annotation platform that runs entirely within your Tailnet for private team collaboration.</span>
+        <br/>
+        <span class="tag">TypeScript</span> <span class="tag">AI</span> <span class="tag">tailnet</span> <span class="tag">annotation</span>
+      </li>
+      <li>
+        <a href="https://hackmit.org" target="_blank" rel="noopener noreferrer">
+          <strong>HackMIT -- Accepted</strong>
+        </a>
+        <br/>
+        <span>HackMIT's flagship hackathon is one of the top collegiate hackathons in the world.</span>
+        <br/>
+        <span class="tag">HackMIT</span> <span class="tag">Boston</span> <span class="tag">MIT</span>
+      </li>
+    </ul>
+  </section>
+
   <section id="comms">
     <h2>comms</h2>
     <br/>
@@ -191,24 +207,11 @@ description: "just another void pointer"
           <strong>devpost</strong>
         </a>
       </li>
-      <li>
-        <a href="#" id="discord-link" onclick="event.preventDefault();copyDiscord();return false;">
-          <strong>discord</strong>
-        </a>
-        <span id="discord-msg" style="color:var(--gutter);font-size:0.85em;margin-left:1ch;"></span>
-      </li>
     </ul>
   </section>
 </section>
 
 <script>
-function copyDiscord() {
-  navigator.clipboard.writeText('fr4nsyz').then(function() {
-    var el = document.getElementById('discord-msg');
-    if (el) { el.textContent = '\u2713 copied'; setTimeout(function(){el.textContent='';},2000); }
-  });
-}
-
 (function() {
   var stars = document.querySelectorAll('.twinkle-star');
   stars.forEach(function(s) {

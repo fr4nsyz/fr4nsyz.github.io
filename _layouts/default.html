@@ -15,8 +15,19 @@
   <meta property="og:url" content="https://fr4nsyz.github.io{{ page_url }}">
   <meta property="og:title" content="{% if page_title %}{{ page_title }} — fr4nsyz{% else %}fr4nsyz{% endif %}">
   <meta property="og:description" content="{{ description | default('just another void pointer') }}">
-  <meta name="color-scheme" content="dark">
-  <link rel="stylesheet" href="/css/style.css?v=2">
+  <meta name="color-scheme" content="light">
+  <script>
+    (function() {
+      var theme = null;
+      var m = document.cookie.match(/(^| )fr4nsyz_theme=([^;]+)/);
+      if (m) theme = m[2];
+      if (theme !== 'light' && theme !== 'dark') {
+        theme = 'light';
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <link rel="stylesheet" href="/css/style.css?v=3">
 </head>
 <body>
   <div class="tmux-bar">
@@ -27,6 +38,18 @@
     <a href="/#comms" class="tmux-win">4:COMMS</a>
     <a href="/blog" class="tmux-win">5:DATA</a>
     <div class="tmux-right-group">
+      <span class="tmux-social">
+        <a class="social-icon" href="https://github.com/fr4nsyz" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="github">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"/></svg>
+        </a>
+        <a class="social-icon" href="https://www.linkedin.com/in/francois-coleongco/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="linkedin">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4.98 3.5A2.5 2.5 0 1 1 0 3.5a2.5 2.5 0 0 1 4.98 0zM.2 8h4.56v14.5H.2V8zm7.6 0h4.37v1.98h.06c.61-1.16 2.09-2.38 4.3-2.38 4.6 0 5.45 3.03 5.45 6.97V22.5h-4.56v-6.83c0-1.63-.03-3.73-2.27-3.73-2.27 0-2.62 1.78-2.62 3.61v6.95H7.8V8z"/></svg>
+        </a>
+        <a class="social-icon" href="https://x.com/fr4nsyz" target="_blank" rel="noopener noreferrer" aria-label="X" title="x">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.9 2H22l-6.8 7.8L23.3 22h-6.3l-4.9-6.4L6.5 22H3.4l7.3-8.3L3 2h6.4l4.4 5.9L18.9 2zm-1.1 18h1.7L7.9 3.9H6.1L17.8 20z"/></svg>
+        </a>
+      </span>
+      <button id="theme-toggle" class="theme-toggle" type="button">light</button>
       <div id="keys-hud" class="keys-hud">[ --- ]</div>
       <span class="tmux-right">fr4nsyz HUD</span>
     </div>
@@ -75,6 +98,7 @@
       var lh, pt, bufTop;
       var cursorLine = 1, cursorCol = 0;
       var contentLines = 1;
+      var lines = [];
 
       var keysHud = document.getElementById('keys-hud');
       var activeKeys = new Set();
@@ -208,12 +232,56 @@
         return buf.getBoundingClientRect().top + window.scrollY;
       }
 
+      function buildLines() {
+        var out = [];
+        var main = document.querySelector('main');
+        if (!main || !document.caretPositionFromPoint && !document.caretRangeFromPoint) return out;
+        var walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
+        var node;
+        var frags = [];
+        while ((node = walker.nextNode())) {
+          if (!node.nodeValue || !node.nodeValue.trim()) continue;
+          var range = document.createRange();
+          range.selectNodeContents(node);
+          var rects = range.getClientRects();
+          for (var i = 0; i < rects.length; i++) {
+            var r = rects[i];
+            if (r.width <= 0 || r.height <= 0) continue;
+            var y = r.top + r.height / 2;
+            var sc = caretAt(r.left + 1, y);
+            var ec = caretAt(r.right - 1, y);
+            if (!sc || sc.node !== node || !ec || ec.node !== node) continue;
+            var text = node.nodeValue.slice(sc.offset, ec.offset);
+            if (!text.trim()) continue;
+            frags.push({ top: r.top + window.scrollY, left: r.left, text: text });
+          }
+        }
+        frags.sort(function(a, b) { return a.top - b.top || a.left - b.left; });
+        for (var j = 0; j < frags.length; j++) {
+          var f = frags[j];
+          var line = null;
+          for (var k = 0; k < out.length; k++) {
+            if (Math.abs(out[k].top - f.top) < 2) { line = out[k]; break; }
+          }
+          if (!line) {
+            line = { top: f.top, left: f.left, text: f.text };
+            out.push(line);
+          } else {
+            if (f.left < line.left) line.left = f.left;
+            line.text += f.text;
+          }
+        }
+        out.sort(function(a, b) { return a.top - b.top; });
+        return out;
+      }
+
       function refreshGutter() {
         var buf = document.querySelector('.buffer');
         var vh = window.innerHeight;
         var totalHeight = Math.max(buf.scrollHeight, vh);
         var totalLines = Math.ceil(totalHeight / lh) + 2;
-        contentLines = getContentLines();
+        lines = buildLines();
+        contentLines = lines.length > 0 ? lines.length : getContentLines();
 
         var out = [];
         for (var i = 1; i <= totalLines; i++) {
@@ -245,7 +313,10 @@
         if (col > maxCol) col = maxCol;
         var buf = document.querySelector('.buffer');
         var padLeft = parseFloat(getComputedStyle(buf).paddingLeft) || 0;
-        cursorEl.style.top = ((cursorLine - 1) * lh) + 'px';
+        var topPx = (lines.length && cursorLine >= 1)
+          ? (lines[cursorLine - 1].top - getBufTop())
+          : ((cursorLine - 1) * lh);
+        cursorEl.style.top = topPx + 'px';
         cursorEl.style.left = (padLeft + col * chPx) + 'px';
       }
 
@@ -253,7 +324,9 @@
         var vh = window.innerHeight;
         var dh = document.body.scrollHeight;
         var bufTop = getBufTop();
-        var cursorY = bufTop + (cursorLine - 1) * lh + pt;
+        var cursorY = (lines.length && cursorLine >= 1)
+          ? (lines[cursorLine - 1].top + pt)
+          : (bufTop + (cursorLine - 1) * lh + pt);
         var target = cursorY - vh / 2 + lh / 2;
         target = Math.max(0, Math.min(target, dh - vh));
         window.scrollTo({ top: Math.round(target) });
@@ -275,15 +348,111 @@
         centerView();
       }
 
+      function isWordChar(ch) {
+        return typeof ch === 'string' && /[A-Za-z0-9_]/.test(ch);
+      }
+
+      function caretAt(x, y) {
+        if (document.caretPositionFromPoint) {
+          var p = document.caretPositionFromPoint(x, y);
+          return p ? { node: p.offsetNode, offset: p.offset } : null;
+        }
+        if (document.caretRangeFromPoint) {
+          var r = document.caretRangeFromPoint(x, y);
+          return r ? { node: r.startContainer, offset: r.startOffset } : null;
+        }
+        return null;
+      }
+
+      function nextWordStart(text, col) {
+        var n = text.length;
+        var i = col;
+        if (i < n && isWordChar(text[i])) {
+          while (i < n && isWordChar(text[i])) i++;
+        }
+        while (i < n && !isWordChar(text[i])) i++;
+        return i < n ? i : col;
+      }
+
+      function prevWordStart(text, col) {
+        var i = col - 1;
+        while (i >= 0 && !isWordChar(text[i])) i--;
+        if (i < 0) return null;
+        while (i >= 0 && isWordChar(text[i])) i--;
+        return i + 1;
+      }
+
+      function wordEnd(text, col) {
+        var n = text.length;
+        var i = col;
+        if (i < n && !isWordChar(text[i])) {
+          while (i < n && !isWordChar(text[i])) i++;
+          if (i >= n) return col;
+          while (i < n && isWordChar(text[i])) i++;
+          return i - 1;
+        }
+        var j = i;
+        while (j < n && isWordChar(text[j])) j++;
+        if (j - 1 > col) return j - 1;
+        while (j < n && !isWordChar(text[j])) j++;
+        if (j >= n) return col;
+        while (j < n && isWordChar(text[j])) j++;
+        return j - 1;
+      }
+
+      function lineIndexAt(docY) {
+        var best = 0;
+        var bestDist = Infinity;
+        for (var i = 0; i < lines.length; i++) {
+          var d = Math.abs(lines[i].top - docY);
+          if (d < bestDist) { bestDist = d; best = i; }
+        }
+        return best;
+      }
+
+      function placeCursorAt(newX, newY) {
+        var buf = document.querySelector('.buffer');
+        var bufRect = buf.getBoundingClientRect();
+        var padLeft = parseFloat(getComputedStyle(buf).paddingLeft) || 0;
+        cursorLine = lineIndexAt(newY + window.scrollY) + 1;
+        var col = Math.round((newX - bufRect.left - padLeft) / chPx);
+        cursorCol = Math.max(0, Math.min(col, maxCursorCol()));
+        placeCursor();
+        centerView();
+      }
+
+      function wordMotion(dir) {
+        var cr = cursorEl.getBoundingClientRect();
+        var x = cr.left + 1;
+        var y = cr.top + cr.height / 2;
+        if (lines.length < 1) return false;
+        var line = lines[lineIndexAt(y + window.scrollY)];
+        var text = line.text;
+        var n = text.length;
+        var col = Math.max(0, Math.min(Math.round((x - line.left) / chPx), n));
+        var newCol;
+        if (dir === 1) newCol = nextWordStart(text, col);
+        else if (dir === -1) newCol = prevWordStart(text, col);
+        else newCol = wordEnd(text, col);
+        if (newCol == null || newCol === col) return false;
+        placeCursorAt(line.left + newCol * chPx, y);
+        return true;
+      }
+
       function init() {
         loadMetrics();
         setupHints();
         measureCh();
         refreshGutter();
         var vh = window.innerHeight;
-        var viewLines = Math.floor(vh / lh);
-        cursorLine = Math.min(Math.floor(viewLines / 2), contentLines);
-        if (cursorLine < 1) cursorLine = 1;
+        var midY = window.scrollY + vh / 2;
+        if (lines.length > 0) {
+          cursorLine = lineIndexAt(midY) + 1;
+        } else {
+          var viewLines = Math.floor(vh / lh);
+          cursorLine = Math.min(Math.floor(viewLines / 2), contentLines);
+          if (cursorLine < 1) cursorLine = 1;
+        }
         cursorCol = 0;
         placeCursor();
         centerView();
@@ -366,6 +535,26 @@
         document.cookie = name + '=' + value + ';expires=' + d.toUTCString() + ';path=/';
       }
 
+      // --- Theme ---
+      function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        var meta = document.querySelector('meta[name="color-scheme"]');
+        if (meta) meta.setAttribute('content', theme === 'light' ? 'light' : 'dark');
+        var btn = document.getElementById('theme-toggle');
+        if (btn) btn.textContent = theme === 'light' ? 'dark' : 'light';
+      }
+
+      applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
+      var themeBtn = document.getElementById('theme-toggle');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', function() {
+          var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+          var next = cur === 'light' ? 'dark' : 'light';
+          applyTheme(next);
+          setCookie('fr4nsyz_theme', next, 365);
+        });
+      }
+
       function dismissModal() {
         var m = document.getElementById('modal');
         if (!m) return;
@@ -414,9 +603,7 @@
         if (!target) return;
         var heading = target.querySelector('h1, h2, h3, h4, h5, h6') || target;
         var headingY = heading.getBoundingClientRect().top + window.scrollY;
-        var bufY = buf.getBoundingClientRect().top + window.scrollY;
-        var lineNum = Math.max(1, Math.round((headingY - bufY - pt) / lh) + 1);
-        gotoLine(lineNum);
+        gotoLine(lines.length > 0 ? lineIndexAt(headingY - pt) + 1 : Math.max(1, Math.round((headingY - bufY - pt) / lh) + 1));
       });
 
       init();
@@ -445,9 +632,9 @@
         if (e.key === 'h') { e.preventDefault(); if (cursorCol > 0) { cursorCol--; audio.move(); } else { cursorCol = 0; audio.edge(); } placeCursor(); return; }
         if (e.key === 'l') { e.preventDefault(); var maxCol = maxCursorCol(); if (cursorCol < maxCol) { cursorCol++; audio.move(); } else { cursorCol = maxCol; audio.edge(); } placeCursor(); return; }
         if (e.key === 'y') { e.preventDefault(); clickLinkAtCursor(); return; }
-        if (e.key === 'w') { e.preventDefault(); var maxCol = maxCursorCol(); var step = Math.min(8, maxCol - cursorCol); if (step > 0) { cursorCol += step; audio.move(); placeCursor(); } return; }
-        if (e.key === 'b') { e.preventDefault(); var step = Math.min(8, cursorCol); if (step > 0) { cursorCol -= step; audio.move(); placeCursor(); } return; }
-        if (e.key === 'e') { e.preventDefault(); var maxCol = maxCursorCol(); var step = Math.min(8, maxCol - cursorCol); if (step > 0) { cursorCol += step; audio.move(); placeCursor(); } return; }
+        if (e.key === 'w') { e.preventDefault(); audio[wordMotion(1) ? 'move' : 'edge'](); return; }
+        if (e.key === 'b') { e.preventDefault(); audio[wordMotion(-1) ? 'move' : 'edge'](); return; }
+        if (e.key === 'e') { e.preventDefault(); audio[wordMotion(0) ? 'move' : 'edge'](); return; }
         if (e.key === '_') { e.preventDefault(); cursorCol = 0; audio.move(); placeCursor(); return; }
         if (e.key === '$') { e.preventDefault(); cursorCol = maxCursorCol(); audio.move(); placeCursor(); return; }
         if (/^[1-5]$/.test(e.key)) {
