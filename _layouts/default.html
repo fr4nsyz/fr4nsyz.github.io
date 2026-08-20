@@ -735,7 +735,6 @@
         if (!href) return;
         if (a.getAttribute('target') === '_blank' || href.startsWith('http') || href.startsWith('//') || href.startsWith('mailto:')) return;
         if (href.startsWith('#') || href === '') return;
-        if (href.indexOf('#') > 0 && href.split('#')[0] === window.location.pathname) return;
         e.preventDefault();
         audio.menu();
         spaNavigate(href);
