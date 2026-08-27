@@ -1,6 +1,6 @@
 ---
 title: "Kernel Harbor -- An EDR with LLM analysis of kernel events"
-date: 2026-08-01
+date: 2026-08-26
 description: ""
 tags: [writeup, Go, C, low-level, cybersecurity]
 ---
@@ -53,41 +53,51 @@ That said, I modified the plan to have a 3-layer approach with:
 
 ## So is it a duck?
 
-Now onto the LLM analysis. This would be the last layer that gets triggered if the previous 
+Now onto the LLM analysis. This was the last layer and by far the slowest one. And no, it wasn't a per-event thing -- that would've cost a zillion dollars and probably melted my terrible laptop. 
 
 My model of choice, was qwen2.5:1.5b (text generation) with nomic-embed-text (for embeddings). I mainly chose the model because I had a terrible laptop when I started this project LOL. It's likely undersized, but it worked for my initial testing. As for the embeddings, it was fine to use nomic-embed-text over nomic-embed-code since it wasn't really source code, and more of human readable strings that were being fed to it.
 
 The data I wanted this model to do was mainly create behavior summaries based on the events that come in.
 
+## One batch two batch penny and dime
 
+The trick to lower latency and increase throughput was batching. Instead of hitting the LLM with every single event, events pile up and get sent to the model in groups. On the analysis side, a batch processor accumulates events per host and fires when it hits either 100 events or a 30-second window, whichever comes first. Then a few worker goroutines chew through the batches.
 
-## I live for this sh*t
+ne inference per batch, and every event still ends up in front of the model eventually.
 
-The PR was merged into cilium:main with commit f221631 :)
+## Slow down, even for a second
 
-Something I DIDN'T expect though, was for my fix to be given backport labels because this fix needed to go to every supported release from 1.17 all the way to the latest 1.20!!
+Here's what happens to a batch once it gets picked up.
 
-![cilium-backport](/img/cilium-backport.png){ width="500" }
+First, every event gets turned into that behavior summary I talked about, short tags describing what the event *means*, not just what it was:
 
-That means any clusters running the affected versions will no longer experience this crash-loop on startup :))
+```
+event_type:execve reverse_shell image:bash
+event_type:connect remote_code_execution image:curl
+```
+
+Then I embed each summary and search Elasticsearch for the five most semantically similar past events from the same host. This lets the model go like "hey, this looks an awful lot like that thing last week that was definitely bad."
+
+I also pull in process ancestry, parents and their children, so it can spot weird spawning patterns like a server dropping into a shell. The correlation engine's chain detections get fed in too, so the model knows when events are part of a coordinated multi-step attack instead of random noise.
+
+All of that gets assembled into one big prompt: the batch, similar events, process trees, and correlation chains as tables, plus guidelines and a strict JSON output format. 
+
+The model then answers with a verdict (`benign` / `suspicious` / `malicious`), a confidence score, evidence, and, the important part, the exact event IDs it thinks are compromised.
+
+## Pull the trigger
+
+When the model says `malicious` with confidence 0.7 or higher, we act.
+
+The agent polls the analysis server for actions every five seconds. Kills come with a PID *and* process start time, so the agent double-checks against `/proc` before sending SIGKILL, i.e. no killing some innocent process because Linux recycled its PID.
+
+Malicious connections get their IP blocked in two ways:
+- iptable rules
+- feeding the address into an XDP eBPF map so packets discarded in the kernel before they even reach user space.
 
 ## Anddd what did we learn?
 
+A combination of both deterministic and AI assisted detections is necessary in today's day and age. Attackers use agents to perform recon and try exploitation paths in minutes, so detection to response speed is critical.
 
-Fast paths are dangerous without fallbacks. The original code assumed the pool would always be ready. It wasn't. Always handle the "not ready yet" case gracefully.
+Model size matters, but context matters more. A 1.5b model is small and it showed structured JSON reasoning was the weak spot. But RAG context plus a strict prompt got it most of the way there. I'd reach for something bigger if I were to do it again. Cut me some slack though, I did say I had a terrible laptop xd.
 
-Upstream syncs are your friend. The fast path existed for performance, but performance means nothing if the agent crashes. Sometimes you need to take the slower path to ensure correctness.
-
-
-Exponential backoff is underrated. It's not just for API rate limiting. It's for any situation where you're waiting for a dependency to become available.
-
-
-Open source is a conversation. The maintainers (shoutout to @gandro) were incredibly helpful throughout the review process. In this PR they were pretty happy with my approach, but certain things regarding maintainability were very useful. Even a nit is worth analyzing why.
-
-![cilium-approach-validation](/img/cilium-approach-validation.png){ width="1000" }
-
-## i'll be back
-
-This was my first contribution to Cilium, one of the world's go-to Kubernetes CNIs, and it won't be my last >:)
-
-Wanna see the code? [PR #47497](https://github.com/cilium/cilium/pull/47497)
+Wanna see the code? [KernelHarbor](https://github.com/fr4nsyz/KernelHarbor)
