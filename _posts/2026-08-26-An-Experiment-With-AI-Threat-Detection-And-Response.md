@@ -5,6 +5,8 @@ description: ""
 tags: [writeup, Go, C, low-level, cybersecurity]
 ---
 
+![kernel-harbor](/img/kernel-harbor-tmux.png){ width="1000" }
+
 Something I'd been toying around with recently is the idea of AI threat detection and response, so I decided to build my own Endpoint Detection and Response system using kernel level event monitoring from my favorite vendors (Falco / Cilium) and implemented a RAG based analysis of the telemetry that comes in.
 
 ## Rounding up the Avengers lol
