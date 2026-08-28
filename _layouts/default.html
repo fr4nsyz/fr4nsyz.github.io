@@ -279,7 +279,11 @@
         var cursorY = bufTop + (cursorLine - 1) * lh + pt;
         var target = cursorY - vh / 2 + lh / 2;
         target = Math.max(0, Math.min(target, dh - vh));
-        window.scrollTo({ top: Math.round(target) });
+        var rounded = Math.round(target);
+        if (rounded !== Math.round(window.scrollY)) {
+          programmaticScroll = true;
+          window.scrollTo({ top: rounded });
+        }
       }
 
       function move(delta) {
@@ -760,10 +764,12 @@
       });
 
       var sf = null;
+      var programmaticScroll = false;
       window.addEventListener('scroll', function() {
         if (sf) return;
         sf = requestAnimationFrame(function() {
           sf = null;
+          if (programmaticScroll) { programmaticScroll = false; return; }
           var bufTop = getBufTop();
           var line = Math.floor((window.scrollY - bufTop) / lh) + 1;
           cursorLine = Math.max(1, Math.min(line, contentLines));
