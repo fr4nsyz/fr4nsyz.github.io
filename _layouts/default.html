@@ -286,6 +286,35 @@
         }
       }
 
+      function saveScrollState(path) {
+        try {
+          var key = 'kh:scroll:' + (path || window.location.pathname);
+          sessionStorage.setItem(key, JSON.stringify({
+            y: window.scrollY,
+            line: cursorLine,
+            col: cursorCol
+          }));
+        } catch (e) {}
+      }
+
+      function restoreScrollState(path) {
+        try {
+          var key = 'kh:scroll:' + (path || window.location.pathname);
+          var raw = sessionStorage.getItem(key);
+          if (!raw) return false;
+          var s = JSON.parse(raw);
+          var maxY = Math.max(0, document.body.scrollHeight - window.innerHeight);
+          if (typeof s.y === 'number') {
+            programmaticScroll = true;
+            window.scrollTo({ top: Math.min(s.y, maxY) });
+          }
+          if (typeof s.line === 'number') cursorLine = s.line;
+          if (typeof s.col === 'number') cursorCol = s.col;
+          placeCursor();
+          return true;
+        } catch (e) { return false; }
+      }
+
       function move(delta) {
         var next = cursorLine + delta;
         if (next < 1 || next > contentLines || next === cursorLine) return;
@@ -432,7 +461,7 @@
         if (cursorLine < 1) cursorLine = 1;
         cursorCol = 0;
         placeCursor();
-        centerView();
+        if (!restoreScrollState()) centerView();
         if (document.fonts) {
           document.fonts.ready.then(function() {
             measureCh();
@@ -677,6 +706,8 @@
           return;
         }
 
+        saveScrollState(spaCurrentUrl.split('#')[0]);
+
         fetch(basePath)
           .then(function(r) { return r.text(); })
           .then(function(html) {
@@ -721,7 +752,7 @@
             measureCh();
             refreshGutter();
             placeCursor();
-            centerView();
+            if (!restoreScrollState()) centerView();
             setupHints();
 
             if (hash) {
@@ -749,6 +780,10 @@
         if (p !== spaCurrentUrl.split('#')[0]) {
           spaNavigate(p + (window.location.hash || ''), true);
         }
+      });
+
+      window.addEventListener('pagehide', function() {
+        saveScrollState();
       });
 
       var rt;
