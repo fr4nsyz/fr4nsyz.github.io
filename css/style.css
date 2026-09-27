@@ -406,6 +406,22 @@ blockquote {
   color: var(--dim-fg);
 }
 
+blockquote.poem {
+  padding-left: 2ch;
+}
+
+blockquote.poem p {
+  margin: 0.4lh 0;
+}
+
+blockquote.poem p:first-child {
+  margin-top: 0;
+}
+
+blockquote.poem p:last-child {
+  margin-bottom: 0;
+}
+
 @media (max-width: 720px) {
   html { font-size: 15px; }
   .gutter, #cursor { display: none; }
