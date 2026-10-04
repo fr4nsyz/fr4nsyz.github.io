@@ -52,7 +52,7 @@ Ideally, you'd want to be able to attribute GPU activity back to the Kubernetes 
 
 I would guess instrumenting observability to this level would cause even more latency and overhead, which I'm not super certain is worth it and I'd guess is why it remains unimplemented.
 
-### Other approaches
+## Other approaches
 
 There are also other NVIDIA technologies that are relevant to GPU sharing, such as MPS and MIG.
 
