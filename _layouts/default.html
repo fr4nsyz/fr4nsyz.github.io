@@ -15,6 +15,16 @@
   <meta property="og:url" content="https://fr4nsyz.github.io{{ page_url }}">
   <meta property="og:title" content="{% if page_title %}{{ page_title }} — fr4nsyz{% else %}fr4nsyz{% endif %}">
   <meta property="og:description" content="{{ description | default('just another void pointer') }}">
+  {% if image %}
+  <meta property="og:image" content="{{ image }}">
+  {% if image_alt %}
+  <meta property="og:image:alt" content="{{ image_alt }}">
+  {% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% if page_title %}{{ page_title }} — fr4nsyz{% else %}fr4nsyz{% endif %}">
+  <meta name="twitter:description" content="{{ description | default('just another void pointer') }}">
+  <meta name="twitter:image" content="{{ image }}">
+  {% endif %}
   <meta name="color-scheme" content="light">
   <script>
     (function() {
@@ -682,6 +692,7 @@
       });
       // --- SPA Router ---
       var spaCurrentUrl = window.location.pathname + (window.location.hash || '');
+      var loadedExternalScripts = new Set();
       function spaNavigate(url, force) {
         if (!url) return;
         var parts = url.split('#');
@@ -717,13 +728,21 @@
             var oldMain = document.querySelector('main');
             if (newMain && oldMain) {
               var scripts = newMain.querySelectorAll('script');
-              var scriptContents = [];
-              scripts.forEach(function(s) { scriptContents.push(s.textContent); });
+              var scriptData = [];
+              scripts.forEach(function(s) {
+                scriptData.push({ src: s.getAttribute('src'), async: s.hasAttribute('async'), code: s.textContent });
+              });
               oldMain.innerHTML = newMain.innerHTML;
-              scriptContents.forEach(function(code) {
-                if (code) {
-                  var ns = document.createElement('script');
-                  ns.textContent = code;
+              scriptData.forEach(function(s) {
+                var ns = document.createElement('script');
+                if (s.src) {
+                  if (loadedExternalScripts.has(s.src)) return;
+                  loadedExternalScripts.add(s.src);
+                  ns.src = s.src;
+                  if (s.async) ns.async = true;
+                  document.body.appendChild(ns);
+                } else if (s.code) {
+                  ns.textContent = s.code;
                   document.body.appendChild(ns);
                   document.body.removeChild(ns);
                 }
