@@ -8,6 +8,7 @@ SITE_DIR = "_site"
 POSTS_DIR = "_posts"
 LAYOUTS_DIR = "_layouts"
 STATIC_DIRS = ["css", "fonts", "js", "music", "img"]
+SITE_URL = "https://fr4nsyz.github.io"
 
 env = Environment(loader=FileSystemLoader(LAYOUTS_DIR), autoescape=select_autoescape())
 
@@ -34,6 +35,19 @@ def slug_from_filename(filename):
     stem = os.path.splitext(filename)[0]
     stem = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", stem)
     return stem
+
+
+def absolute_url(src):
+    if src.startswith(("http://", "https://", "//")):
+        return src
+    return SITE_URL + "/" + src.lstrip("/")
+
+
+def extract_image(body):
+    m = re.search(r"^!\[([^\]]*)\]\(([^)]+)\)", body, re.MULTILINE)
+    if not m:
+        return None, None
+    return absolute_url(m.group(2).strip()), m.group(1).strip() or None
 
 
 def build():
@@ -67,6 +81,12 @@ def build():
             else:
                 date_obj = datetime.now()
 
+            if fm.get("image"):
+                image_src = absolute_url(fm["image"])
+                image_alt = None
+            else:
+                image_src, image_alt = extract_image(body)
+
             post = {
                 "title": fm.get("title", "Untitled"),
                 "description": fm.get("description", ""),
@@ -74,6 +94,8 @@ def build():
                 "date_formatted": date_obj.strftime("%B %d, %Y"),
                 "tags": fm.get("tags", []),
                 "url": url,
+                "image": image_src,
+                "image_alt": image_alt,
             }
 
             content = render_page(
@@ -92,6 +114,8 @@ def build():
                 page_title=post["title"],
                 description=post["description"],
                 page_url=url,
+                image=post["image"],
+                image_alt=post["image_alt"],
             )
 
             out_dir = os.path.join(SITE_DIR, "blog", slug)
@@ -133,6 +157,8 @@ def build():
             "page_url": url,
             "posts": extra_vars.get("posts", []),
             "all_tags": extra_vars.get("all_tags", []),
+            "image": None,
+            "image_alt": None,
         }
         body_tmpl = env.from_string(body)
         rendered = body_tmpl.render(**ctx)
