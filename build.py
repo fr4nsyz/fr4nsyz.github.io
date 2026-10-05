@@ -1,4 +1,4 @@
-import os, re, shutil
+import html, os, re, shutil
 from datetime import datetime, date as date_type
 import markdown
 import yaml
@@ -48,6 +48,12 @@ def build():
             with open(os.path.join(POSTS_DIR, fname)) as f:
                 fm, body = parse_front_matter(f.read())
 
+            body = re.sub(
+                r"^```mermaid\n(.*?)^```",
+                lambda m: f'<pre class="mermaid">\n{html.escape(m.group(1))}</pre>\n',
+                body,
+                flags=re.S | re.M,
+            )
             html_body = md.convert(body)
             slug = slug_from_filename(fname)
             url = f"/blog/{slug}/"
