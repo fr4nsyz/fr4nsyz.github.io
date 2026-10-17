@@ -475,6 +475,11 @@ img {
   display: block;
 }
 
+.void-gif {
+  width: min(460px, 100%);
+  margin: 1.5lh auto 0;
+}
+
 ::selection {
   background: var(--fg);
   color: var(--bg);
