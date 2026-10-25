@@ -25,28 +25,29 @@
   <meta name="twitter:description" content="{{ description | default('just another void pointer') }}">
   <meta name="twitter:image" content="{{ image }}">
   {% endif %}
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="dark">
   <script>
     (function() {
       var theme = null;
       var m = document.cookie.match(/(^| )fr4nsyz_theme=([^;]+)/);
       if (m) theme = m[2];
       if (theme !== 'light' && theme !== 'dark') {
-        theme = 'light';
+        theme = 'dark';
       }
       document.documentElement.setAttribute('data-theme', theme);
     })();
   </script>
-  <link rel="stylesheet" href="/css/style.css?v=4">
+  <link rel="stylesheet" href="/css/style.css?v=5">
 </head>
 <body>
   <div class="tmux-bar">
     <span class="tmux-session">[1]</span>
     <a href="/#whoami" class="tmux-win">1:STAT</a>
     <a href="/#experience" class="tmux-win">2:PERKS</a>
-    <a href="/#projects" class="tmux-win">3:INV</a>
-    <a href="/#comms" class="tmux-win">4:COMMS</a>
-    <a href="/blog" class="tmux-win">5:DATA</a>
+    <a href="/#opensource" class="tmux-win">3:OSS</a>
+    <a href="/#projects" class="tmux-win">4:INV</a>
+    <a href="/#comms" class="tmux-win">5:COMMS</a>
+    <a href="/blog" class="tmux-win">6:DATA</a>
     <div class="tmux-right-group">
       <span class="tmux-social">
         <a class="social-icon" href="https://github.com/fr4nsyz" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="github">
@@ -85,7 +86,7 @@
         <div class="modal-row"><span class="modal-key">_/$</span> line start / end</div>
         <div class="modal-row"><span class="modal-key">ctrl-d/u</span> half page down / up</div>
         <div class="modal-row"><span class="modal-key">y</span> click link at cursor</div>
-        <div class="modal-row"><span class="modal-key">1-5</span> switch tabs</div>
+        <div class="modal-row"><span class="modal-key">1-6</span> switch tabs</div>
       </div>
       <div class="modal-section">
         <div class="modal-section-title">> OR USE THE MOUSE</div>
@@ -108,6 +109,8 @@
       var lh, pt, bufTop;
       var cursorLine = 1, cursorCol = 0;
       var contentLines = 1;
+
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
       var keysHud = document.getElementById('keys-hud');
       var activeKeys = new Set();
@@ -296,10 +299,15 @@
         }
       }
 
+      function normPath(p) {
+        p = p || window.location.pathname || '/';
+        if (p.length > 1 && p.charAt(p.length - 1) === '/') p = p.slice(0, -1);
+        return p || '/';
+      }
+
       function saveScrollState(path) {
         try {
-          var key = 'kh:scroll:' + (path || window.location.pathname);
-          sessionStorage.setItem(key, JSON.stringify({
+          sessionStorage.setItem('kh:scroll:' + normPath(path), JSON.stringify({
             y: window.scrollY,
             line: cursorLine,
             col: cursorCol
@@ -309,8 +317,7 @@
 
       function restoreScrollState(path) {
         try {
-          var key = 'kh:scroll:' + (path || window.location.pathname);
-          var raw = sessionStorage.getItem(key);
+          var raw = sessionStorage.getItem('kh:scroll:' + normPath(path));
           if (!raw) return false;
           var s = JSON.parse(raw);
           var maxY = Math.max(0, document.body.scrollHeight - window.innerHeight);
@@ -323,6 +330,14 @@
           placeCursor();
           return true;
         } catch (e) { return false; }
+      }
+
+      function resetCursor() {
+        var viewLines = Math.floor(window.innerHeight / lh);
+        cursorLine = Math.min(Math.floor(viewLines / 2), contentLines);
+        if (cursorLine < 1) cursorLine = 1;
+        cursorCol = 0;
+        placeCursor();
       }
 
       function move(delta) {
@@ -465,12 +480,7 @@
         setupHints();
         measureCh();
         refreshGutter();
-        var vh = window.innerHeight;
-        var viewLines = Math.floor(vh / lh);
-        cursorLine = Math.min(Math.floor(viewLines / 2), contentLines);
-        if (cursorLine < 1) cursorLine = 1;
-        cursorCol = 0;
-        placeCursor();
+        resetCursor();
         if (!restoreScrollState()) centerView();
         if (document.fonts) {
           document.fonts.ready.then(function() {
@@ -560,7 +570,7 @@
         if (btn) btn.textContent = theme === 'light' ? 'dark' : 'light';
       }
 
-      applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
+      applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
       var themeBtn = document.getElementById('theme-toggle');
       if (themeBtn) {
         themeBtn.addEventListener('click', function() {
@@ -655,7 +665,7 @@
         if (e.key === 'e') { e.preventDefault(); audio[wordMotion(0) ? 'move' : 'edge'](); return; }
         if (e.key === '_') { e.preventDefault(); cursorCol = 0; audio.move(); placeCursor(); return; }
         if (e.key === '$') { e.preventDefault(); cursorCol = maxCursorCol(); audio.move(); placeCursor(); return; }
-        if (/^[1-5]$/.test(e.key)) {
+        if (/^[1-6]$/.test(e.key)) {
           e.preventDefault();
           audio.menu();
           var links = document.querySelectorAll('.tmux-win');
@@ -665,7 +675,7 @@
           var hashIdx = href.indexOf('#');
           var basePath = hashIdx >= 0 ? href.slice(0, hashIdx) : href;
           var hash = hashIdx >= 0 ? href.slice(hashIdx + 1) : '';
-          if (!basePath || basePath === window.location.pathname) {
+          if (!basePath || basePath === normPath(window.location.pathname)) {
             if (hash) {
               window.location.hash = '#' + hash;
               var target = document.getElementById(hash);
@@ -696,7 +706,7 @@
       function spaNavigate(url, force) {
         if (!url) return;
         var parts = url.split('#');
-        var basePath = parts[0];
+        var basePath = normPath(parts[0]);
         var hash = parts[1] || '';
 
         if (!force && url === spaCurrentUrl) {
@@ -708,7 +718,7 @@
           return;
         }
 
-        if (!force && basePath === window.location.pathname) {
+        if (!force && basePath === normPath(window.location.pathname)) {
           if (hash) {
             window.location.hash = '#' + hash;
             spaCurrentUrl = window.location.pathname + '#' + hash;
@@ -770,7 +780,7 @@
             loadMetrics();
             measureCh();
             refreshGutter();
-            placeCursor();
+            resetCursor();
             if (!restoreScrollState()) centerView();
             setupHints();
 
@@ -796,7 +806,7 @@
 
       window.addEventListener('popstate', function() {
         var p = window.location.pathname;
-        if (p !== spaCurrentUrl.split('#')[0]) {
+        if (normPath(p) !== normPath(spaCurrentUrl.split('#')[0])) {
           spaNavigate(p + (window.location.hash || ''), true);
         }
       });
