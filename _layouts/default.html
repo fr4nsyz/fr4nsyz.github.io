@@ -28,16 +28,16 @@
   <meta name="color-scheme" content="dark">
   <script>
     (function() {
-      var theme = null;
       var m = document.cookie.match(/(^| )fr4nsyz_theme=([^;]+)/);
-      if (m) theme = m[2];
-      if (theme !== 'light' && theme !== 'dark') {
-        theme = 'dark';
-      }
+      var base = m ? m[2] : 'dark';
+      if (base !== 'light' && base !== 'dark') base = 'dark';
+      var g = document.cookie.match(/(^| )fr4nsyz_green=([^;]+)/);
+      var green = g ? g[2] : 'off';
+      var theme = green === 'green' ? 'green-dark' : green === 'pipboy' ? 'pipboy' : base;
       document.documentElement.setAttribute('data-theme', theme);
     })();
   </script>
-  <link rel="stylesheet" href="/css/style.css?v=5">
+  <link rel="stylesheet" href="/css/style.css?v=16">
 </head>
 <body>
   <div class="tmux-bar">
@@ -61,8 +61,8 @@
         </a>
       </span>
       <button id="theme-toggle" class="theme-toggle" type="button">light</button>
+      <button id="green-toggle" class="theme-toggle" type="button">green</button>
       <div id="keys-hud" class="keys-hud">[ --- ]</div>
-      <span class="tmux-right">fr4nsyz HUD</span>
     </div>
   </div>
   <div class="buffer">
@@ -228,10 +228,10 @@
       }
 
       function loadMetrics() {
-        var cs = getComputedStyle(document.body);
-        lh = parseFloat(cs.lineHeight) || 25.6;
         var buf = document.querySelector('.buffer');
-        pt = parseFloat(getComputedStyle(buf).paddingTop) || 0;
+        var cs = getComputedStyle(buf);
+        lh = parseFloat(cs.lineHeight) || 12.8;
+        pt = parseFloat(cs.paddingTop) || 0;
       }
 
       function getContentLines() {
@@ -263,9 +263,26 @@
         var el = document.createElement('span');
         el.style.cssText = 'font:inherit;visibility:hidden;position:fixed;white-space:pre;';
         el.textContent = '0'.repeat(50);
-        document.body.appendChild(el);
+        var buf = document.querySelector('.buffer');
+        buf.appendChild(el);
         chPx = el.offsetWidth / 50;
-        document.body.removeChild(el);
+        buf.removeChild(el);
+      }
+
+      function fitWhoamiArt() {
+        var bio = document.querySelector('.whoami-bio');
+        var art = document.querySelector('.whoami-art');
+        if (!bio || !art) return;
+        art.style.fontSize = '';
+        if (window.innerWidth <= 720) return;
+        var lines = art.textContent.split('\n').length;
+        if (!lines) return;
+        var cs = getComputedStyle(art);
+        var lhRatio = parseFloat(cs.lineHeight) / parseFloat(cs.fontSize);
+        if (!isFinite(lhRatio) || lhRatio <= 0) lhRatio = 1.1;
+        var target = bio.getBoundingClientRect().height;
+        if (!target) return;
+        art.style.fontSize = (target / (lines * lhRatio)).toFixed(2) + 'px';
       }
 
       function maxCursorCol() {
@@ -457,21 +474,121 @@
         centerView();
       }
 
-      function wordMotion(dir) {
+      function textModel(root) {
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+          acceptNode: function(node) {
+            var el = node.parentElement;
+            while (el && el !== root) {
+              if (el.hidden || el.tagName === 'SCRIPT' || el.tagName === 'STYLE' ||
+                  el.tagName === 'NOSCRIPT' || el.tagName === 'TEMPLATE') {
+                return NodeFilter.FILTER_REJECT;
+              }
+              el = el.parentElement;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        });
+        var nodes = [];
+        var text = '';
+        var node;
+        while ((node = walker.nextNode())) {
+          var val = node.nodeValue || '';
+          nodes.push({ node: node, start: text.length, len: val.length });
+          text += val;
+        }
+        return { text: text, nodes: nodes };
+      }
+
+      function offsetInModel(model, caret) {
+        for (var i = 0; i < model.nodes.length; i++) {
+          var rec = model.nodes[i];
+          if (rec.node === caret.node) {
+            return rec.start + Math.min(caret.offset, rec.len);
+          }
+        }
+        return null;
+      }
+
+      function pointAtOffset(model, target) {
+        for (var i = 0; i < model.nodes.length; i++) {
+          var rec = model.nodes[i];
+          if (target <= rec.start + rec.len) {
+            return {
+              node: rec.node,
+              offset: Math.max(0, Math.min(rec.len, target - rec.start))
+            };
+          }
+        }
+        return null;
+      }
+
+      function rectAtOffset(model, target) {
+        var a = pointAtOffset(model, target);
+        if (!a) return null;
+        var b = pointAtOffset(model, target + 1);
+        var r = document.createRange();
+        if (b) {
+          r.setStart(a.node, a.offset);
+          r.setEnd(b.node, b.offset);
+        } else {
+          var prev = pointAtOffset(model, target - 1);
+          if (!prev) return null;
+          r.setStart(prev.node, prev.offset);
+          r.setEnd(a.node, a.offset);
+          var rects = r.getClientRects();
+          var last = rects.length ? rects[rects.length - 1] : r.getBoundingClientRect();
+          return { left: last.right, top: last.top, height: last.height };
+        }
+        var found = r.getClientRects();
+        return found.length ? found[0] : r.getBoundingClientRect();
+      }
+
+      function caretOnCursorLine(root) {
+        var buf = document.querySelector('.buffer');
+        var bufRect = buf.getBoundingClientRect();
+        var padLeft = parseFloat(getComputedStyle(buf).paddingLeft) || 0;
+        var left = bufRect.left + padLeft;
+        var right = bufRect.right - 4;
         var cr = cursorEl.getBoundingClientRect();
-        var x = cr.left + 1;
         var y = cr.top + cr.height / 2;
-        var info = lineTextAt(x, y);
-        if (!info) return false;
-        var text = info.text;
-        var n = text.length;
-        var col = Math.max(0, Math.min(Math.round((cr.left - info.rect.left) / chPx), n));
+        var start = Math.max(left, cr.left + 1);
+        var step = Math.max(2, chPx / 2);
+        var x;
+        for (x = start; x <= right; x += step) {
+          var c = caretAt(x, y);
+          if (c && root.contains(c.node)) return c;
+        }
+        for (x = start - step; x >= left; x -= step) {
+          var back = caretAt(x, y);
+          if (back && root.contains(back.node)) return back;
+        }
+        return null;
+      }
+
+      function wordMotion(dir) {
+        var root = document.querySelector('main');
+        if (!root) return false;
+        var cr = cursorEl.getBoundingClientRect();
+        var c = caretOnCursorLine(root);
+        if (!c) return false;
+        var model = textModel(root);
+        var text = model.text;
+        var col = offsetInModel(model, c);
+        if (col == null) return false;
+        var before = false;
+        if (dir === 1) {
+          var startRect = rectAtOffset(model, col);
+          before = startRect && startRect.left > cr.left + chPx;
+        }
         var newCol;
-        if (dir === 1) newCol = nextWordStart(text, col);
+        if (dir === 1) newCol = before ? col : nextWordStart(text, col);
         else if (dir === -1) newCol = prevWordStart(text, col);
         else newCol = wordEnd(text, col);
-        if (newCol == null || newCol === col) return false;
-        placeCursorAt(info.rect.left + newCol * chPx, info.rect.top + info.rect.height / 2);
+        if (newCol == null) return false;
+        if (!before && newCol === col) return false;
+        var rect = rectAtOffset(model, newCol);
+        if (!rect) return false;
+        placeCursorAt(rect.left + 0.5, rect.top + rect.height / 2);
         return true;
       }
 
@@ -479,11 +596,13 @@
         loadMetrics();
         setupHints();
         measureCh();
+        fitWhoamiArt();
         refreshGutter();
         resetCursor();
         if (!restoreScrollState()) centerView();
         if (document.fonts) {
           document.fonts.ready.then(function() {
+            fitWhoamiArt();
             measureCh();
             placeCursor();
           });
@@ -562,22 +681,49 @@
       }
 
       // --- Theme ---
-      function applyTheme(theme) {
+      function currentBase() {
+        return getCookie('fr4nsyz_theme') === 'light' ? 'light' : 'dark';
+      }
+      function currentGreen() {
+        var g = getCookie('fr4nsyz_green');
+        return (g === 'green' || g === 'pipboy') ? g : 'off';
+      }
+      function applyTheme() {
+        var base = currentBase();
+        var green = currentGreen();
+        var theme = green === 'green' ? 'green-dark' : green === 'pipboy' ? 'pipboy' : base;
         document.documentElement.setAttribute('data-theme', theme);
+
         var meta = document.querySelector('meta[name="color-scheme"]');
-        if (meta) meta.setAttribute('content', theme === 'light' ? 'light' : 'dark');
-        var btn = document.getElementById('theme-toggle');
-        if (btn) btn.textContent = theme === 'light' ? 'dark' : 'light';
+        if (meta) meta.setAttribute('content', base === 'light' ? 'light' : 'dark');
+
+        var themeBtn = document.getElementById('theme-toggle');
+        if (themeBtn) themeBtn.textContent = base === 'light' ? 'dark' : 'light';
+
+        var greenBtn = document.getElementById('green-toggle');
+        if (greenBtn) {
+          greenBtn.textContent = green === 'off' ? 'green' : green === 'green' ? 'pipboy' : 'normal';
+          greenBtn.classList.toggle('theme-toggle-active', green !== 'off');
+        }
       }
 
-      applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+      applyTheme();
       var themeBtn = document.getElementById('theme-toggle');
       if (themeBtn) {
         themeBtn.addEventListener('click', function() {
-          var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-          var next = cur === 'light' ? 'dark' : 'light';
-          applyTheme(next);
+          var next = currentBase() === 'light' ? 'dark' : 'light';
           setCookie('fr4nsyz_theme', next, 365);
+          setCookie('fr4nsyz_green', 'off', 365);
+          applyTheme();
+        });
+      }
+      var greenBtn = document.getElementById('green-toggle');
+      if (greenBtn) {
+        greenBtn.addEventListener('click', function() {
+          var cur = currentGreen();
+          var next = cur === 'off' ? 'green' : cur === 'green' ? 'pipboy' : 'off';
+          setCookie('fr4nsyz_green', next, 365);
+          applyTheme();
         });
       }
 
@@ -779,6 +925,7 @@
             initModal();
             loadMetrics();
             measureCh();
+            fitWhoamiArt();
             refreshGutter();
             resetCursor();
             if (!restoreScrollState()) centerView();
@@ -820,6 +967,7 @@
         clearTimeout(rt);
         rt = setTimeout(function() {
           loadMetrics();
+          fitWhoamiArt();
           measureCh();
           refreshGutter();
           placeCursor();
@@ -848,7 +996,7 @@
       const { default: mermaid } = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
       nodes.forEach(n => n.dataset.src = n.textContent);
       const render = async () => {
-        const dark = document.documentElement.dataset.theme === "dark";
+        const dark = document.documentElement.dataset.theme !== "light";
         mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "default" });
         nodes.forEach(n => { n.removeAttribute("data-processed"); n.textContent = n.dataset.src; });
         await mermaid.run({ nodes });
