@@ -9,7 +9,7 @@ One stuck bit in a lander's flight computer can crash it into the Moon.
 
 ![A single stuck bit silently crashes the lander](/img/fly-me-to-the-moon-sdc.gif){ width="1000" }
 
-*Blue is the clean landing, orange is the same landing with one stuck bit. The faulted lander hits the surface at 113 m/s, 16 km from where it should be, and the software never notices.*
+_Blue is the clean landing, orange is the same landing with one stuck bit. The faulted lander hits the surface at 113 m/s, 16 km from where it should be, and the software never notices._
 
 This past week I've been building a tool to find out how that happens and what stops it.
 
@@ -41,9 +41,9 @@ Of these, I had to turn off:
 
 For the demo above, I picked a lunar landing. I'd expect a bit flip during the coast to the Moon to matter less, since there's usually time to recover, but descent is different. During descent the engine follows every guidance calculation, and a fault that keeps repeating has no time to be fixed.
 
-So now I can inject faults, YAYYYY
-
 ## Borrowing from SpaceX
+
+So now I can inject faults, YAYYYY
 
 But how do I defend against them? I looked at how SpaceX protects Dragon.
 
@@ -55,17 +55,17 @@ I wasn't able to find a good primary source as to whether they do voting with th
 
 ![The same fault, caught by the redundant computers](/img/fly-me-to-the-moon-corrected.gif){ width="1000" }
 
-*The exact same stuck bit, now with the redundant computers. Computer 2's cores disagree, it goes silent, and the other two land at 1 m/s right on target.*
+_The exact same stuck bit, now with the redundant computers. Computer 2's cores disagree, it goes silent, and the other two land at 1 m/s right on target._
 
 ## Results so far
 
 200 faults each:
 
-| Fault | Defense | Result |
-|---|---|---|
-| One-time bit flip | none | the control loop corrects all 200 on the next tick |
-| Stuck bit (like a defective core) | none | 28 of 200 landings fail |
-| Stuck bit, confined to one core | SpaceX-style layout | 0 of 200 fail |
+| Fault                             | Defense             | Result                                             |
+| --------------------------------- | ------------------- | -------------------------------------------------- |
+| One-time bit flip                 | none                | the control loop corrects all 200 on the next tick |
+| Stuck bit (like a defective core) | none                | 28 of 200 landings fail                            |
+| Stuck bit, confined to one core   | SpaceX-style layout | 0 of 200 fail                                      |
 
 In those 28 failed runs, the wrong value spread through navigation and guidance into the engine commands, and the lander touched down too fast or too far off target. The software never crashed and nothing reported an error.
 
