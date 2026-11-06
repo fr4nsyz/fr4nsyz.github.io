@@ -328,6 +328,12 @@ li {
   margin: 0;
 }
 
+article > ul {
+  list-style: disc;
+  padding-left: 3ch;
+  margin: 1lh 0;
+}
+
 strong {
   font-weight: 700;
 }
