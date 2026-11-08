@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 SITE_DIR = "_site"
 POSTS_DIR = "_posts"
 LAYOUTS_DIR = "_layouts"
-STATIC_DIRS = ["css", "fonts", "js", "music", "img", "videos"]
+STATIC_DIRS = ["css", "fonts", "js", "music", "img", "videos", "assets"]
 SITE_URL = "https://fr4nsyz.github.io"
 
 env = Environment(loader=FileSystemLoader(LAYOUTS_DIR), autoescape=select_autoescape())
