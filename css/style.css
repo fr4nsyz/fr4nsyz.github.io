@@ -366,7 +366,8 @@ strong {
   vertical-align: -0.18em;
 }
 
-:root[data-theme="light"] .org-logo--amd {
+:root[data-theme="light"] .org-logo--amd,
+:root[data-theme="light"] .org-logo--ibm {
   filter: invert(1);
 }
 
