@@ -125,7 +125,8 @@ description: "just another void pointer"
         <br />
         <span>{{ item.description }}</span>
         <div class="pill-row">
-          {% for tag in item.tags %}<span class="pill">{{ tag }}</span>{% endfor %}
+          {% for tag in item.tags %}<span class="pill">{{ tag }}</span>{% endfor
+          %}
         </div>
       </li>
       {% endfor %}
@@ -159,16 +160,13 @@ description: "just another void pointer"
         />
         {% endif %}
         <div class="project-body">
-          <a
-            href="{{ project.url }}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href="{{ project.url }}" target="_blank" rel="noopener noreferrer">
             <strong>{{ project.title }}</strong>
           </a>
           <p>{{ project.description | safe }}</p>
           <div class="pill-row">
-            {% for tag in project.tags %}<span class="pill">{{ tag }}</span>{% endfor %}
+            {% for tag in project.tags %}<span class="pill">{{ tag }}</span>{%
+            endfor %}
           </div>
         </div>
       </article>
