@@ -10,18 +10,18 @@ description: "just another void pointer"
   <h2>whoami</h2>
   <br />
   <div class="whoami-text">
-      <div class="whoami-bio">
-        <p>
-      I'm Francois, an Honors computer science student focusing on systems
-      programming + security engineering.
-    </p>
-    <p>
-      This is my corner of the internet where I share what I'm doing, work,
-      personal projects, and open source!
-    </p>
-    <p>You can navigate this site with keybindings from Vim, btw ;)</p>
-      </div>
-      <pre
+    <div class="whoami-bio">
+      <p>
+        I'm Francois, an Honors computer science student focusing on systems
+        programming + security engineering.
+      </p>
+      <p>
+        This is my corner of the internet where I share what I'm doing, work,
+        personal projects, and open source!
+      </p>
+      <p>You can navigate this site with keybindings from Vim, btw ;)</p>
+    </div>
+    <pre
       class="whoami-art"
     >--------------------.<span class="twinkle-star" data-delay="0">*</span>....---..---+#####++-....--................-.......-
 ---------------.........-----++################+-........<span class="twinkle-star" data-delay="0.8">*</span>.......-........
@@ -63,7 +63,7 @@ description: "just another void pointer"
 ############+++########################################+++++++-+#++--..---
 #########++++++##########################################+++++-#+++--+++++
 #######+++++++++#########################################++++++##++--+++++</pre>
-    </div>
+  </div>
 
   <section id="experience">
     <h2>xp:</h2>
@@ -117,37 +117,18 @@ description: "just another void pointer"
     <h2>open source</h2>
     <br />
     <ul>
+      {% for item in opensource %}
       <li>
-        <a
-          href="https://github.com/cilium/cilium/pull/47497"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <strong>cilium/cilium #47497</strong>
+        <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">
+          <strong>{{ item.title }}</strong>
         </a>
         <br />
-        <span
-          >Fixed an agent crash/restart loop caused by router IP allocation
-          racing operator CIDR pool provisioning.</span
-        >
-        <br />
-        <span class="tag">Go</span> <span class="tag">Cilium</span>
-        <span class="tag">Kubernetes</span> <span class="tag">IPAM</span>
-        <span class="tag">networking</span>
+        <span>{{ item.description }}</span>
+        <div class="pill-row">
+          {% for tag in item.tags %}<span class="pill">{{ tag }}</span>{% endfor %}
+        </div>
       </li>
-      <li>
-        <a
-          href="https://github.com/falcosecurity/falcosidekick/pull/1303"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <strong>falcosecurity/falcosidekick #1303</strong>
-        </a>
-        <br />
-        <span>Fixed typo in README.</span>
-        <br />
-        <span class="tag">Docs</span>
-      </li>
+      {% endfor %}
     </ul>
   </section>
 
@@ -155,147 +136,43 @@ description: "just another void pointer"
     <h2>inventory</h2>
     <br />
     <div class="project-grid">
+      {% for project in projects %}
       <article class="project-card">
+        {% if project.media.type == 'video' %}
+        <video
+          class="project-video"
+          src="{{ project.media.src }}"
+          autoplay
+          muted
+          loop
+          playsinline
+          tabindex="-1"
+          preload="metadata"
+          aria-label="{{ project.media.alt }}"
+        ></video>
+        {% else %}
         <img
           class="project-video"
-          src="/img/fly-me-to-the-moon-sdc.gif"
-          alt="One stuck bit in the flight computer crashes the lunar lander"
+          src="{{ project.media.src }}"
+          alt="{{ project.media.alt }}"
           loading="lazy"
         />
+        {% endif %}
         <div class="project-body">
           <a
-            href="https://github.com/fr4nsyz/fly-me-to-the-moon"
+            href="{{ project.url }}"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <strong>Fly Me To the Moon</strong>
+            <strong>{{ project.title }}</strong>
           </a>
-          <p>
-            Offline, deterministic platform for studying silent data corruption
-            (SDC) in numerical C++ programs, demonstrated on a lunar landing
-            computer. <a href="/blog/fly-me-to-the-moon-week-1/">Week 1 writeup</a>
-          </p>
-          <span class="tag">C++</span> <span class="tag">LLVM</span>
-          <span class="tag">SDC</span> <span class="tag">simulation</span>
-          <span class="tag">space</span>
+          <p>{{ project.description | safe }}</p>
+          <div class="pill-row">
+            {% for tag in project.tags %}<span class="pill">{{ tag }}</span>{% endfor %}
+          </div>
         </div>
       </article>
-      <article class="project-card">
-        <video
-          class="project-video"
-          src="/videos/steganography.mp4"
-          autoplay
-          muted
-          loop
-          playsinline
-          tabindex="-1"
-          preload="metadata"
-          aria-label="Steganography Suite demo"
-        ></video>
-        <div class="project-body">
-          <a
-            href="https://github.com/fr4nsyz/Steganography_Suite"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <strong>Steganography_Suite</strong>
-          </a>
-          <p>
-            Desktop GUI steganography tool with AES-256 GCM encryption for
-            hiding secrets in image files.
-          </p>
-          <span class="tag">Rust</span> <span class="tag">cybersecurity</span>
-          <span class="tag">steganography</span>
-          <span class="tag">encryption</span>
-        </div>
-      </article>
-      <article class="project-card">
-        <video
-          class="project-video"
-          src="/videos/kernelharbor.mp4"
-          autoplay
-          muted
-          loop
-          playsinline
-          tabindex="-1"
-          preload="metadata"
-          aria-label="KernelHarbor demo"
-        ></video>
-        <div class="project-body">
-          <a
-            href="https://github.com/fr4nsyz/KernelHarbor"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <strong>KernelHarbor</strong>
-          </a>
-          <p>
-            Linux kernel security monitoring with eBPF and AI-powered threat
-            detection analysis. Built in collaboration with engineers from
-            TrendAI and AMD
-          </p>
-          <span class="tag">Go</span> <span class="tag">C</span>
-          <span class="tag">eBPF</span> <span class="tag">security</span>
-          <span class="tag">AI</span>
-        </div>
-      </article>
-      <article class="project-card">
-        <video
-          class="project-video"
-          src="/videos/datascale.mp4"
-          autoplay
-          muted
-          loop
-          playsinline
-          tabindex="-1"
-          preload="metadata"
-          aria-label="datascale demo"
-        ></video>
-        <div class="project-body">
-          <a
-            href="https://github.com/fr4nsyz/datascale"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <strong>datascale -- Hack Canada Winner</strong>
-          </a>
-          <p>
-            AI-assisted dataset annotation platform that runs entirely within
-            your Tailnet for private team collaboration.
-          </p>
-          <span class="tag">TypeScript</span> <span class="tag">AI</span>
-          <span class="tag">tailnet</span> <span class="tag">annotation</span>
-          <span class="tag">2026</span>
-        </div>
-      </article>
-      <article class="project-card">
-        <video
-          class="project-video"
-          src="/videos/mefsc.mp4"
-          autoplay
-          muted
-          loop
-          playsinline
-          tabindex="-1"
-          preload="metadata"
-          aria-label="MEFSC demo"
-        ></video>
-        <div class="project-body">
-          <a
-            href="https://github.com/fr4nsyz/MEFSC"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <strong>MEFSC</strong>
-          </a>
-          <p>
-            Multithreaded encrypted file server/client with ChaChaPoly1305 AEAD
-            encryption, SQLite auth, and Tailscale compatibility.
-          </p>
-          <span class="tag">C++</span> <span class="tag">encryption</span>
-          <span class="tag">filesystem</span> <span class="tag">security</span>
-        </div>
-      </article>
+      {% endfor %}
     </div>
   </section>
 
@@ -361,11 +238,9 @@ description: "just another void pointer"
       Thanks for reading, and before you go, remember you're a
       <code>void*</code> too :)
     </p>
-    <img
-      class="void-gif"
-      src="/img/forever-a-void-pointer.gif"
-      alt="forever a void *pointer"
-    />
+    <p class="void-gif" aria-label="forever a void *pointer">
+      forever a void <span class="void-star" aria-hidden="true">*</span>pointer
+    </p>
   </section>
 
   <script>

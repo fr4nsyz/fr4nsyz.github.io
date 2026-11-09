@@ -53,33 +53,6 @@
 }
 
 :root[data-theme="green-dark"] {
-  --bg: #07100a;
-  --fg: #7ee787;
-  --gutter: #2e5a35;
-  --accent: #3fb950;
-  --cursor: #7ee787;
-  --dim: #123018;
-  --glow: rgba(126, 231, 135, 0.12);
-  --panel-bg: #0d1a10;
-  --border: #1e3a24;
-  --dim-fg: #4a8a55;
-  --border-soft: rgba(126, 231, 135, 0.1);
-  --hover-bg: rgba(126, 231, 135, 0.08);
-  --cursor-glow: rgba(126, 231, 135, 0.25);
-  --accent-glow: rgba(63, 185, 80, 0.25);
-  --crt-vignette: rgba(0, 0, 0, 0.5);
-  --crt-scanline: rgba(0, 0, 0, 0.12);
-  --modal-bg: rgba(0, 0, 0, 0.85);
-  --modal-inset: rgba(0, 0, 0, 0.5);
-  --hud-bg: rgba(0, 0, 0, 0.2);
-  --fg-inverse: #07100a;
-  --syntax-string: #a5e58a;
-  --syntax-builtin: #c4f5b0;
-  --syntax-error: #ff7b6b;
-  --syntax-insert: #7ee787;
-}
-
-:root[data-theme="pipboy"] {
   --bg: #020a02;
   --fg: #41ff00;
   --gutter: #1f7a00;
@@ -122,7 +95,7 @@ body {
   text-shadow: 0 0 3px var(--glow), 0 0 8px var(--glow);
 }
 
-:root[data-theme="pipboy"] body {
+:root[data-theme="green-dark"] body {
   text-shadow: 0 0 4px var(--glow), 0 0 14px var(--glow);
 }
 
@@ -343,6 +316,26 @@ strong {
   font-size: 0.85em;
 }
 
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-top: 0.75em;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.08em 0.55em;
+  color: var(--dim-fg);
+  background: var(--hud-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 0.78em;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
 .org {
   color: var(--accent);
   font-weight: 700;
@@ -355,7 +348,7 @@ strong {
 }
 
 .org-logo--amd {
-  width: 3.4em;
+  width: 4.4em;
   height: auto;
   vertical-align: -0.12em;
 }
@@ -590,8 +583,24 @@ img {
 }
 
 .void-gif {
-  width: min(460px, 100%);
+  width: fit-content;
+  max-width: 100%;
   margin: 1.5lh auto 0;
+  font-size: clamp(1.4rem, 5.5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--fg);
+}
+
+.void-star {
+  display: inline-block;
+  animation: void-blink 1s steps(1, end) infinite;
+}
+
+@keyframes void-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 
 .project-grid {
@@ -684,6 +693,10 @@ img {
 
 .project-body p {
   margin: 0.9em 0;
+}
+
+.project-body .pill-row {
+  margin-top: 0;
 }
 
 .project-body a {

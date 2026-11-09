@@ -1,0 +1,112 @@
+opensource:
+  - title: "cilium/cilium #47497"
+    url: "https://github.com/cilium/cilium/pull/47497"
+    description: >-
+      Fixed an agent crash/restart loop caused by router IP allocation
+      racing operator CIDR pool provisioning.
+    tags:
+      - Go
+      - Cilium
+      - Kubernetes
+      - IPAM
+      - networking
+
+  - title: "cilium/cilium #48992"
+    url: "https://github.com/cilium/cilium/pull/48992"
+    description: >-
+      Replaced MD5 with FNV-1a for faster config change detection.
+    tags:
+      - Go
+      - Cilium
+      - Kubernetes
+      - cryptography
+
+  - title: "falcosecurity/falco-website #1536"
+    url: "https://github.com/falcosecurity/falco-website/pull/1536"
+    description: >-
+      Added a missing cryptominer detection macro to Falco docs as an
+      upstream fix.
+    tags:
+      - cloud
+      - runtime
+      - cybersecurity
+
+projects:
+  - title: "Fly Me To the Moon"
+    url: "https://github.com/fr4nsyz/fly-me-to-the-moon"
+    media:
+      type: image
+      src: "/img/fly-me-to-the-moon-sdc.gif"
+      alt: "One stuck bit in the flight computer crashes the lunar lander"
+    description: >-
+      Offline, deterministic platform for studying silent data corruption
+      (SDC) in numerical C++ programs, demonstrated on a lunar landing
+      computer. <a href="/blog/fly-me-to-the-moon-week-1/">Week 1 writeup</a>
+    tags:
+      - C++
+      - LLVM
+      - SDC
+      - simulation
+      - aerospace
+
+  - title: "Steganography_Suite"
+    url: "https://github.com/fr4nsyz/Steganography_Suite"
+    media:
+      type: video
+      src: "/videos/steganography.mp4"
+      alt: "Steganography Suite demo"
+    description: >-
+      Desktop GUI steganography tool with AES-256 GCM encryption for
+      hiding secrets in image files at the bit level.
+    tags:
+      - Rust
+      - cybersecurity
+      - steganography
+      - encryption
+
+  - title: "KernelHarbor"
+    url: "https://github.com/fr4nsyz/KernelHarbor"
+    media:
+      type: video
+      src: "/videos/kernelharbor.mp4"
+      alt: "KernelHarbor demo"
+    description: >-
+      Linux kernel security monitoring with eBPF and AI-powered threat
+      detection analysis. Built in collaboration with engineers from
+      TrendAI and AMD
+    tags:
+      - Go
+      - C
+      - eBPF
+      - cybersecurity
+      - AI
+
+  - title: "datascale -- Hack Canada Winner"
+    url: "https://github.com/fr4nsyz/datascale"
+    media:
+      type: video
+      src: "/videos/datascale.mp4"
+      alt: "datascale demo"
+    description: >-
+      AI-assisted dataset annotation platform that runs entirely within
+      your Tailnet for private team collaboration.
+    tags:
+      - TypeScript
+      - AI
+      - privacy
+      - Tailscale
+      - 2026
+
+  - title: "MEFSC"
+    url: "https://github.com/fr4nsyz/MEFSC"
+    media:
+      type: video
+      src: "/videos/mefsc.mp4"
+      alt: "MEFSC demo"
+    description: >-
+      Multithreaded encrypted file server/client with ChaChaPoly1305 AEAD
+      encryption, SQLite auth, and Tailscale compatibility.
+    tags:
+      - C++
+      - TCP
+      - cryptography

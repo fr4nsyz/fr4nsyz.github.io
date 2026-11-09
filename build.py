@@ -7,6 +7,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 SITE_DIR = "_site"
 POSTS_DIR = "_posts"
 LAYOUTS_DIR = "_layouts"
+DATA_DIR = "_data"
 STATIC_DIRS = ["css", "fonts", "js", "music", "img", "videos", "assets"]
 SITE_URL = "https://fr4nsyz.github.io"
 
@@ -29,6 +30,20 @@ def parse_front_matter(text):
 def render_page(content, layout, **kwargs):
     tmpl = env.get_template(f"{layout}.html")
     return tmpl.render(content=content, **kwargs)
+
+
+def load_data():
+    data = {}
+    if not os.path.isdir(DATA_DIR):
+        return data
+    for fname in sorted(os.listdir(DATA_DIR)):
+        if not fname.endswith((".yml", ".yaml")):
+            continue
+        with open(os.path.join(DATA_DIR, fname)) as f:
+            loaded = yaml.safe_load(f) or {}
+        if isinstance(loaded, dict):
+            data.update(loaded)
+    return data
 
 
 def slug_from_filename(filename):
@@ -129,6 +144,8 @@ def build():
 
     all_tags = sorted(set(tag for p in posts for tag in p.get("tags", [])))
 
+    data = load_data()
+
     pages = [
         (
             "index.html",
@@ -159,6 +176,7 @@ def build():
             "all_tags": extra_vars.get("all_tags", []),
             "image": None,
             "image_alt": None,
+            **data,
         }
         body_tmpl = env.from_string(body)
         rendered = body_tmpl.render(**ctx)

@@ -33,11 +33,11 @@
       if (base !== 'light' && base !== 'dark') base = 'dark';
       var g = document.cookie.match(/(^| )fr4nsyz_green=([^;]+)/);
       var green = g ? g[2] : 'off';
-      var theme = green === 'green' ? 'green-dark' : green === 'pipboy' ? 'pipboy' : base;
+      var theme = green === 'green' ? 'green-dark' : base;
       document.documentElement.setAttribute('data-theme', theme);
     })();
   </script>
-  <link rel="stylesheet" href="/css/style.css?v=17">
+  <link rel="stylesheet" href="/css/style.css?v=19">
 </head>
 <body>
   <div class="tmux-bar">
@@ -686,12 +686,12 @@
       }
       function currentGreen() {
         var g = getCookie('fr4nsyz_green');
-        return (g === 'green' || g === 'pipboy') ? g : 'off';
+        return g === 'green' ? g : 'off';
       }
       function applyTheme() {
         var base = currentBase();
         var green = currentGreen();
-        var theme = green === 'green' ? 'green-dark' : green === 'pipboy' ? 'pipboy' : base;
+        var theme = green === 'green' ? 'green-dark' : base;
         document.documentElement.setAttribute('data-theme', theme);
 
         var meta = document.querySelector('meta[name="color-scheme"]');
@@ -702,7 +702,7 @@
 
         var greenBtn = document.getElementById('green-toggle');
         if (greenBtn) {
-          greenBtn.textContent = green === 'off' ? 'green' : green === 'green' ? 'pipboy' : 'normal';
+          greenBtn.textContent = green === 'off' ? 'green' : 'normal';
           greenBtn.classList.toggle('theme-toggle-active', green !== 'off');
         }
       }
@@ -721,7 +721,7 @@
       if (greenBtn) {
         greenBtn.addEventListener('click', function() {
           var cur = currentGreen();
-          var next = cur === 'off' ? 'green' : cur === 'green' ? 'pipboy' : 'off';
+          var next = cur === 'off' ? 'green' : 'off';
           setCookie('fr4nsyz_green', next, 365);
           applyTheme();
         });
