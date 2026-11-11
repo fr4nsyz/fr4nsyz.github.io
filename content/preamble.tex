@@ -1,0 +1,110 @@
+% Shared preamble for every document under content/.
+%
+% Documents are compiled twice:
+%   * tex4ht (make4ht) turns them into HTML fragments for the frontend shell
+%   * pdflatex still produces a normal PDF, so every helper below degrades
+%     to a no-op when LaTeX is not running under tex4ht.
+%
+% The frontend shell owns layout, navigation and the terminal aesthetic.
+% Everything below the "content vocabulary" heading is presentation that
+% LaTeX cannot express on its own (videos, pills, cards).
+
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{longtable}
+\usepackage[hidelinks]{hyperref}
+
+% The site renders plain section titles, never numbered ones.
+\setcounter{secnumdepth}{0}
+
+% ---------------------------------------------------------------------------
+% tex4ht plumbing
+% ---------------------------------------------------------------------------
+
+% tex4ht defines \HCode; plain LaTeX does not, so provide a no-op fallback.
+\newif\ifhtmlmode
+\ifdefined\HCode\htmlmodetrue\else\htmlmodefalse\fi
+\providecommand{\HCode}[1]{}
+
+% Emit raw HTML. No-op in PDF mode.
+\newcommand{\hcode}[1]{\ifhtmlmode\HCode{#1}\fi}
+
+% Declares the language of the code block that follows. The HTML converter
+% reads the marker and highlights the block with Pygments.
+\newcommand{\codelang}[1]{\hcode{<!--lang:#1-->}}
+
+% ---------------------------------------------------------------------------
+% Content vocabulary
+% ---------------------------------------------------------------------------
+
+% A tag pill, e.g. \pill{Go}
+%
+% The text is typeset outside the raw HTML so that LaTeX escapes apply to it.
+% tex4ht folds adjacent identical <span> elements into one, so the pill uses
+% an <i> element and carries the "pill" class the stylesheet keys off.
+\newcommand{\pill}[1]{\hcode{<i class="pill">}#1\hcode{</i>}\hcode{ }}
+
+% A row of pills. The pills are passed in already rendered, so that no
+% \hcode call is ever nested inside another one.
+\newcommand{\pillrow}[1]{\hcode{<div class="pill-row">}#1\hcode{</div>}}
+
+% An image served from the site's static assets.
+%   \webimg{src}{alt}{class}
+%   \webimgw{src}{alt}{class}{width}
+\newcommand{\webimg}[3]{\hcode{<img src="#1" alt="#2" class="#3" loading="lazy">}}
+\newcommand{\webimgw}[4]{\hcode{<img src="#1" alt="#2" class="#3" width="#4" loading="lazy">}}
+
+% An autoplaying, looping video served from the site's static assets.
+\newcommand{\webvideo}[2]{\hcode{<video class="project-video" src="#1" autoplay muted loop playsinline tabindex="-1" preload="metadata" aria-label="#2"></video>}}
+
+% A link that opens in a new tab.
+\newcommand{\extlink}[2]{\hcode{<a href="#1" target="_blank" rel="noopener noreferrer"><strong>}#2\hcode{</strong></a>}}
+
+% A company logo next to an employer name.
+\newcommand{\orglogo}[2]{\hcode{<img class="org-logo org-logo--#1" src="/assets/#2" alt="#1">}}
+
+% The date line of an experience entry.
+\newcommand{\orgdate}[1]{\hcode{<br/><span class="date">#1</span>}}
+
+% --- open source contributions ---------------------------------------------
+
+% The title of an open source contribution, linking to the pull request.
+\newcommand{\osslink}[2]{\hcode{<a href="#2" target="_blank" rel="noopener noreferrer"><strong>}#1\hcode{</strong></a><br/>}}
+
+\newcommand{\ossdesc}[1]{\hcode{<span>}#1\hcode{</span>}}
+
+% --- project cards ---------------------------------------------------------
+
+\newenvironment{projectcard}{%
+  \hcode{<article class="project-card">}%
+}{%
+  \hcode{</article>}%
+}
+
+\newcommand{\projecttitle}[2]{%
+  \hcode{<div class="project-body"><a href="#2" target="_blank" rel="noopener noreferrer"><strong>}#1\hcode{</strong></a>}%
+}
+
+\newcommand{\projectdesc}[1]{\hcode{<p>}#1\hcode{</p>}}
+
+% A link that stays on the site, usable inside \projectdesc.
+\newcommand{\sitelink}[2]{\hcode{<a href="#1">}#2\hcode{</a>}}
+
+% A literal underscore. LaTeX's \_ does not survive the HTML conversion.
+\newcommand{\uscore}{\char95}
+
+% A literal tilde. LaTeX's \textasciitilde does not survive the conversion.
+\newcommand{\tildechar}{\char126}
+
+% A horizontal rule.
+\newcommand{\webhr}{\hcode{<hr/>}}
+
+% --- inline links in prose -------------------------------------------------
+
+% A link that stays on the site. Use \href inside ordinary prose.

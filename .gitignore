@@ -8,3 +8,20 @@ _site/
 .sass-cache/
 .jekyll-cache/
 Gemfile.lock
+
+# New pipeline
+.build/
+dist/
+frontend/public/generated/
+legacy/_site/
+__pycache__/
+
+# LaTeX leftovers
+*.aux
+*.log
+*.out
+*.toc
+*.4ct
+*.4tc
+*.fls
+*.fdb_latexmk

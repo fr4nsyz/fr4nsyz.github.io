@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+{% include "components/head.html.j2" %}
+</head>
+<body>
+{% include "components/tmux-bar.html.j2" %}
+  <div class="buffer">
+    <div id="gutter" class="gutter" aria-hidden="true"></div>
+    <div id="crt-overlay"></div>
+    <div id="cursor"></div>
+    <main>
+      {{ content | safe }}
+    </main>
+  </div>
+  <div id="hint"></div>
+{% include "components/hud-modal.html.j2" %}
+  <audio id="bg-music" preload="auto" style="display:none"></audio>
+  <script src="/js/shell.js"></script>
+</body>
+</html>

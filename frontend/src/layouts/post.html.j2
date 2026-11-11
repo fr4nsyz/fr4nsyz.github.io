@@ -1,0 +1,10 @@
+<article>
+  <header>
+    <h1>{{ page_title }}</h1>
+    <p class="date"><time datetime="{{ date_xml }}">{{ date_formatted }}</time></p>
+    {% if tags %}
+    <p>{% for tag in tags %}<span class="tag">#{{ tag }}</span> {% endfor %}</p>
+    {% endif %}
+  </header>
+  {{ content | safe }}
+</article>

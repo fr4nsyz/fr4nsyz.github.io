@@ -11,6 +11,11 @@ DATA_DIR = "_data"
 STATIC_DIRS = ["css", "fonts", "js", "music", "img", "videos", "assets"]
 SITE_URL = "https://fr4nsyz.github.io"
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
+# Media assets are shared with the new site and live at the repository root.
+SHARED_DIRS = {"fonts", "js", "music", "img", "videos", "assets"}
+
 env = Environment(loader=FileSystemLoader(LAYOUTS_DIR), autoescape=select_autoescape())
 
 md = markdown.Markdown(extensions=["fenced_code", "codehilite", "tables", "attr_list"])
@@ -66,6 +71,7 @@ def extract_image(body):
 
 
 def build():
+    os.chdir(HERE)
     if os.path.exists(SITE_DIR):
         shutil.rmtree(SITE_DIR)
 
@@ -188,12 +194,14 @@ def build():
             f.write(content)
 
     for d in STATIC_DIRS:
-        if os.path.exists(d):
-            shutil.copytree(d, os.path.join(SITE_DIR, d), dirs_exist_ok=True)
+        src = os.path.join(REPO, d) if d in SHARED_DIRS else d
+        if os.path.exists(src):
+            shutil.copytree(src, os.path.join(SITE_DIR, d), dirs_exist_ok=True)
 
     for f in ["favicon.svg", "favicon.ico"]:
-        if os.path.exists(f):
-            shutil.copy2(f, os.path.join(SITE_DIR, f))
+        src = os.path.join(REPO, f)
+        if os.path.exists(src):
+            shutil.copy2(src, os.path.join(SITE_DIR, f))
 
     with open(os.path.join(SITE_DIR, ".nojekyll"), "w"):
         pass

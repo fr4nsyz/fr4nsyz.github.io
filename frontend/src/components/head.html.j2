@@ -1,0 +1,37 @@
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="canonical" href="https://fr4nsyz.github.io{{ page_url }}">
+  <title>{% if page_title %}{{ page_title }} — fr4nsyz{% else %}fr4nsyz{% endif %}</title>
+  <meta name="title" content="{% if page_title %}{{ page_title }} — fr4nsyz{% else %}fr4nsyz{% endif %}">
+  <meta name="description" content="{{ description | default('just another void pointer') }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fr4nsyz.github.io{{ page_url }}">
+  <meta property="og:title" content="{% if page_title %}{{ page_title }} — fr4nsyz{% else %}fr4nsyz{% endif %}">
+  <meta property="og:description" content="{{ description | default('just another void pointer') }}">
+  {% if image %}
+  <meta property="og:image" content="{{ image }}">
+  {% if image_alt %}
+  <meta property="og:image:alt" content="{{ image_alt }}">
+  {% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% if page_title %}{{ page_title }} — fr4nsyz{% else %}fr4nsyz{% endif %}">
+  <meta name="twitter:description" content="{{ description | default('just another void pointer') }}">
+  <meta name="twitter:image" content="{{ image }}">
+  {% endif %}
+  <meta name="color-scheme" content="dark">
+  <script>
+    (function() {
+      var m = document.cookie.match(/(^| )fr4nsyz_theme=([^;]+)/);
+      var base = m ? m[2] : 'dark';
+      if (base !== 'light' && base !== 'dark') base = 'dark';
+      var g = document.cookie.match(/(^| )fr4nsyz_green=([^;]+)/);
+      var green = g ? g[2] : 'off';
+      var theme = green === 'green' ? 'green-dark' : base;
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <link rel="stylesheet" href="/css/style.css?v=20">

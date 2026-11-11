@@ -1,0 +1,21 @@
+\input{preamble.tex}
+
+\begin{document}
+
+\section{open source}
+
+\begin{itemize}
+  \item \osslink{cilium/cilium \#47497}{https://github.com/cilium/cilium/pull/47497}
+        \ossdesc{Fixed an agent crash/restart loop caused by router IP allocation racing operator CIDR pool provisioning.}
+        \pillrow{\pill{Go}\pill{Cilium}\pill{Kubernetes}\pill{IPAM}\pill{networking}}
+
+  \item \osslink{cilium/cilium \#48992}{https://github.com/cilium/cilium/pull/48992}
+        \ossdesc{Replaced MD5 with FNV-1a for faster config change detection.}
+        \pillrow{\pill{Go}\pill{Cilium}\pill{Kubernetes}\pill{cryptography}}
+
+  \item \osslink{falcosecurity/falco-website \#1536}{https://github.com/falcosecurity/falco-website/pull/1536}
+        \ossdesc{Added a missing cryptominer detection macro to Falco docs as an upstream fix.}
+        \pillrow{\pill{cloud}\pill{runtime}\pill{cybersecurity}}
+\end{itemize}
+
+\end{document}

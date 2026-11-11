@@ -1,0 +1,35 @@
+<h1>fr4nsyz_</h1>
+<p class="date">Systems & Security · Low-Level · AI</p>
+
+<section id="whoami">
+  <div class="whoami-text">
+    <div class="whoami-bio">
+      {{ fragments.about | safe }}
+    </div>
+{% include "components/whoami-art.html.j2" %}
+  </div>
+</section>
+
+<section id="experience">
+  {{ fragments.experience | safe }}
+</section>
+
+<section id="community">
+  {{ fragments.community | safe }}
+</section>
+
+<section id="opensource">
+  {{ fragments.opensource | safe }}
+</section>
+
+<section id="projects">
+  {{ fragments.projects | safe }}
+</section>
+
+<section id="comms">
+  {{ fragments.comms | safe }}
+</section>
+
+<section id="note">
+  {{ fragments.note | safe }}
+</section>
