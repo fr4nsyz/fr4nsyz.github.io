@@ -129,7 +129,7 @@ def compile_latex(path, slug):
 # ---------------------------------------------------------------------------
 
 SPAN_RE = re.compile(r"<(/?)span\b([^>]*)>", re.I)
-CLASS_RE = re.compile(r"class='([^']*)'")
+CLASS_RE = re.compile(r"class=['\"]([^'\"]*)['\"]")
 
 FONT_TAGS = {
     "cmtt": "code",
@@ -294,16 +294,16 @@ def clean_classes(fragment):
     fragment = re.sub(r"<ol class='enumerate\d*'>", "<ol>", fragment)
     fragment = re.sub(r"<li class='itemize'>", "<li>", fragment)
     fragment = re.sub(r"<li class='enumerate'[^>]*>", "<li>", fragment)
-    fragment = re.sub(r"<p class='(?:noindent|indent|nopar)'>", "<p>", fragment)
+    fragment = re.sub(r"<p class=['\"](?:noindent|indent|nopar)['\"]\s*>", "<p>", fragment)
     fragment = re.sub(r"<br class='newline'\s*/>", "<br/>", fragment)
     fragment = re.sub(r"(<(?:p|h[2-6])[^>]*>)\s+", r"\1", fragment)
     return fragment
 
 
 def strip_tex_ids(fragment):
-    fragment = re.sub(r"<a id='x1-[^']*'></a>", "", fragment)
+    fragment = re.sub(r"<a\s+id=['\"]x1-[^'\"]*['\"]></a>", "", fragment)
     fragment = re.sub(
-        r"\s+id='(?:x1-|TBL-|verbatim-|listing-|fancyvrb)[^']*'", "", fragment
+        r"\s+id=['\"](?:x1-|TBL-|verbatim-|listing-|fancyvrb)[^'\"]*['\"]", "", fragment
     )
     fragment = re.sub(
         r"(<(?:td|th|tr|table)\b[^>]*?)\s+style='[^']*'", r"\1", fragment
