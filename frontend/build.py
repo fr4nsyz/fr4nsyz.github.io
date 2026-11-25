@@ -10,13 +10,18 @@ in src/ owns layout, navigation and the terminal look.
 """
 
 import argparse
+import functools
+import hashlib
 import html as html_lib
+import http.server
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -38,8 +43,11 @@ DIST = ROOT / "dist"
 SITE_URL = "https://fr4nsyz.github.io"
 MEDIA_DIRS = ["img", "videos", "music", "assets", "fonts"]
 STATIC_FILES = ["favicon.svg", "favicon.ico"]
+STATE_FILE = ROOT / ".build" / "build-state.json"
+STATE_VERSION = 1
 
 DOCUMENT_RE = re.compile(r"\\begin\{document\}")
+INCLUDE_RE = re.compile(r"\\(?:input|include)\{([^}]+)\}")
 META_RE = re.compile(r"\\newcommand\{\\Doc(\w+)\}\{(.*?)\}\s*$", re.M)
 DATE_PREFIX_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)$")
 IMAGE_RE = re.compile(r"\\webimgw?\{([^}]*)\}\{([^}]*)\}")
@@ -47,6 +55,51 @@ IMAGE_RE = re.compile(r"\\webimgw?\{([^}]*)\}\{([^}]*)\}")
 
 def log(message):
     print(message)
+
+
+def file_signature(path):
+    stat = path.stat()
+    return hashlib.sha256(f"{path}:{stat.st_mtime_ns}:{stat.st_size}".encode()).hexdigest()
+
+
+def dependency_signature(path, seen=None):
+    if seen is None:
+        seen = set()
+    path = path.resolve()
+    if path in seen:
+        return ""
+    seen.add(path)
+    parts = [file_signature(path)]
+    source = path.read_text(encoding="utf-8")
+    for name in INCLUDE_RE.findall(source):
+        candidates = []
+        if name.endswith(".tex"):
+            candidates.append(path.parent / name)
+            candidates.append(CONTENT / name)
+        else:
+            candidates.append(path.parent / f"{name}.tex")
+            candidates.append(CONTENT / name)
+            candidates.append(CONTENT / f"{name}.tex")
+        for candidate in candidates:
+            if candidate.exists():
+                parts.append(dependency_signature(candidate, seen))
+                break
+    return hashlib.sha256("|".join(parts).encode()).hexdigest()
+
+
+def load_state():
+    try:
+        state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if state.get("version") != STATE_VERSION:
+        return {}
+    return state
+
+
+def save_state(state):
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -432,6 +485,46 @@ def build_pages(env, fragments, posts):
     return pages
 
 
+def static_sources():
+    sources = {}
+    for relative in ("styles/style.css", "js/shell.js"):
+        target = "css/style.css" if relative.startswith("styles") else "js/shell.js"
+        sources[target] = SRC / relative
+    for directory in MEDIA_DIRS:
+        source_dir = ROOT / directory
+        if source_dir.exists():
+            for path in sorted(source_dir.rglob("*")):
+                if path.is_file():
+                    sources[f"{directory}/{path.relative_to(source_dir).as_posix()}"] = path
+    for name in STATIC_FILES:
+        source = ROOT / name
+        if source.exists():
+            sources[name] = source
+    return sources
+
+
+def copy_static_incremental(state):
+    old = state.get("static", {})
+    current = {}
+    for relative, source in static_sources().items():
+        signature = file_signature(source)
+        current[relative] = signature
+        target = DIST / relative
+        if old.get(relative) == signature and target.exists():
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        log(f"static: {relative}")
+    for relative in old:
+        if relative not in current:
+            target = DIST / relative
+            if target.exists():
+                target.unlink()
+                log(f"static: removed {relative}")
+    (DIST / ".nojekyll").write_text("")
+    state["static"] = current
+
+
 def copy_static():
     DIST.mkdir(parents=True, exist_ok=True)
     for relative in ("styles/style.css", "js/shell.js"):
@@ -449,25 +542,59 @@ def copy_static():
     (DIST / ".nojekyll").write_text("")
 
 
-def build(content_only=False):
-    if not content_only and DIST.exists():
-        shutil.rmtree(DIST)
-    if GENERATED.exists():
-        shutil.rmtree(GENERATED)
-    GENERATED.mkdir(parents=True, exist_ok=True)
+def build(content_only=False, incremental=False):
+    state = load_state() if incremental else {}
+    use_incremental = incremental and bool(state)
+
+    if use_incremental:
+        GENERATED.mkdir(parents=True, exist_ok=True)
+        if not content_only:
+            DIST.mkdir(parents=True, exist_ok=True)
+    else:
+        if not content_only and DIST.exists():
+            shutil.rmtree(DIST)
+        if GENERATED.exists():
+            shutil.rmtree(GENERATED)
+        GENERATED.mkdir(parents=True, exist_ok=True)
 
     fragments = {}
     posts = []
     manifest = {"pages": {}, "posts": []}
+    documents_state = {}
+    old_documents = state.get("documents", {})
+    current_slugs = set()
 
     for path, source in find_documents():
         slug = slug_for(path)
+        current_slugs.add(slug)
         metadata = parse_metadata(source)
-        fragment = convert(compile_latex(path, slug))
         relative = path.relative_to(CONTENT)
+        output = (
+            GENERATED / "blog" / f"{slug}.html"
+            if relative.parent.name == "blog"
+            else GENERATED / f"{slug}.html"
+        )
+        output_name = str(output.relative_to(GENERATED))
+        signature = dependency_signature(path)
+        cached = old_documents.get(slug)
+
+        if (
+            use_incremental
+            and cached
+            and cached.get("signature") == signature
+            and cached.get("output") == output_name
+            and output.exists()
+        ):
+            fragment = output.read_text(encoding="utf-8")
+        else:
+            fragment = convert(compile_latex(path, slug))
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(fragment, encoding="utf-8")
+            log(f"latex: {relative} -> {output.relative_to(GENERATED)}")
+
+        documents_state[slug] = {"signature": signature, "output": output_name}
 
         if relative.parent.name == "blog":
-            output = GENERATED / "blog" / f"{slug}.html"
             date = date_for(path)
             image, image_alt = first_image(source)
             post = {
@@ -485,13 +612,16 @@ def build(content_only=False):
             posts.append(post)
             manifest["posts"].append({k: v for k, v in post.items() if k != "fragment"})
         else:
-            output = GENERATED / f"{slug}.html"
             fragments[slug] = fragment
-            manifest["pages"][slug] = {"fragment": str(output.relative_to(GENERATED))}
+            manifest["pages"][slug] = {"fragment": output_name}
 
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(fragment, encoding="utf-8")
-        log(f"latex: {relative} -> {output.relative_to(GENERATED)}")
+    for slug, cached in old_documents.items():
+        output_name = cached.get("output")
+        if slug not in current_slugs and output_name:
+            output = GENERATED / output_name
+            if output.exists() and output.is_file():
+                output.unlink()
+                log(f"latex: removed {output_name}")
 
     posts.sort(key=lambda post: post["date_xml"], reverse=True)
     manifest["posts"] = posts
@@ -509,8 +639,66 @@ def build(content_only=False):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(html, encoding="utf-8")
 
-    copy_static()
-    log(f"Built site to {DIST.relative_to(ROOT)}/ - {len(posts)} posts, {len(pages)} pages")
+    if use_incremental:
+        copy_static_incremental(state)
+    else:
+        copy_static()
+        state["static"] = {
+            relative: file_signature(source) for relative, source in static_sources().items()
+        }
+
+    state["version"] = STATE_VERSION
+    state["documents"] = documents_state
+    save_state(state)
+
+    verb = "Updated" if use_incremental else "Built"
+    log(f"{verb} site to {DIST.relative_to(ROOT)}/ - {len(posts)} posts, {len(pages)} pages")
+
+
+def watch_snapshot():
+    snapshot = {}
+    for path in CONTENT.rglob("*.tex"):
+        snapshot[str(path)] = file_signature(path)
+    for path in SRC.rglob("*"):
+        if path.is_file():
+            snapshot[str(path)] = file_signature(path)
+    for source in static_sources().values():
+        snapshot[str(source)] = file_signature(source)
+    return snapshot
+
+
+def watch(port):
+    build(incremental=True)
+
+    class QuietHandler(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, fmt, *args):
+            return
+
+    handler = functools.partial(QuietHandler, directory=str(DIST))
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    log(f"Serving dist/ on http://localhost:{port}/")
+
+    last = watch_snapshot()
+    try:
+        while True:
+            time.sleep(0.75)
+            current = watch_snapshot()
+            if current == last:
+                continue
+            changed = sorted(path for path, signature in current.items() if last.get(path) != signature)
+            removed = sorted(path for path in last if path not in current)
+            labels = changed + [f"{path} (removed)" for path in removed]
+            last = current
+            names = [str(Path(path).relative_to(ROOT)) for path in labels[:8]]
+            log("changed: " + ", ".join(names))
+            build(incremental=True)
+    except KeyboardInterrupt:
+        log("stopping")
+    finally:
+        server.shutdown()
+        server.server_close()
 
 
 if __name__ == "__main__":
@@ -520,5 +708,25 @@ if __name__ == "__main__":
         action="store_true",
         help="compile the LaTeX sources and stop before rendering the shell",
     )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        help="rebuild only changed documents and static files",
+    )
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="rebuild changed files and serve dist locally",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("PORT", "8000")),
+        help="port for --watch",
+    )
     args = parser.parse_args()
-    build(content_only=args.content_only)
+
+    if args.watch:
+        watch(args.port)
+    else:
+        build(content_only=args.content_only, incremental=args.incremental)

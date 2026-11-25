@@ -3,7 +3,7 @@ PORT ?= 8000
 
 .DEFAULT_GOAL := site
 
-.PHONY: site content dev legacy install clean
+.PHONY: site content dev legacy install clean watch
 
 ## Build the whole site into dist/
 site:
@@ -17,6 +17,9 @@ content:
 dev: site
 	@echo "Serving dist/ on http://localhost:$(PORT)/"
 	$(PYTHON) -m http.server $(PORT) --directory dist
+
+watch:
+	$(PYTHON) frontend/build.py --watch --port $(PORT)
 
 ## Build the old site (kept for reference) into legacy/_site/
 legacy:
