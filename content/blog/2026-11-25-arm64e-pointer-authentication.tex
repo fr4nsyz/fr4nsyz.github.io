@@ -50,9 +50,9 @@ The goal of this my exploration into PAC is to be able to understand and find an
 
 \textbf{A PAC is a keyed hash, not encryption.} \texttt{sign(pointer, modifier, key)} computes a MAC (Message Authentication Code) over the pointer and a 64-bit modifier, then stores the truncated result in the pointer's spare high bits. \texttt{authenticate} recomputes it, compares, and removes it.
 
-At first glance, it might seem useless to compute a long MAC that just gets truncated because that would reduce the number of possible bit combinations an attacker must try, but since we store the PAC alongside the 64 bits of the pointer itself, we need to truncate it.
+At first glance it might seem pointless to compute a full-length MAC only to throw most of it away. But the pointer's spare high bits are all the room we have, so the PAC has to be truncated.
 
-Computing the longer MAC is still very important because it allows for greater entropy in the result that still gets carried on to the truncated PAC.
+Computing the longer MAC is still very important though because running the full-strength MAC first (even if it will be truncated) keeps the bits that ARE kept highly unpredictable.
 
 \subsection{Keys}
 
