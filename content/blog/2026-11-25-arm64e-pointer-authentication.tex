@@ -21,7 +21,7 @@ blr  x8              ; branch to it; no integrity check
 
 If an attacker can write that memory slot, they choose the branch target.
 
-We demonstrated the redirect in \texttt{m1\uscore{}fnptr.c}: overwriting \texttt{o.op} made the program call \texttt{unexpected\uscore{}handler} instead of \texttt{add\uscore{}one}. On arm64e the same call site is different:
+Below is a demonstrated redirect in \texttt{m1\uscore{}fnptr.c}: overwriting \texttt{o.op} made the program call \texttt{unexpected\uscore{}handler} instead of \texttt{add\uscore{}one}. On arm64e the same call site is different:
 
 \codelang{asm}
 \begin{verbatim}
@@ -30,9 +30,11 @@ ldr    x8, [sp, #16]
 blraaz x8            ; authenticated indirect branch (IA key, zero modifier)
 \end{verbatim}
 
-The CPU will now reject a pointer whose signature does not verify.
+With this, the CPU will now reject a pointer whose signature does not pass verification.
 
-Pointer Authentication (PAC) turns a pointer into a value that the CPU can verify before use. On AArch64 it is an architecture extension (PAuth, mandatory from Armv8.3-A); on Apple platforms it is deployed as the \textbf{arm64e} ABI. PAC is widely described as a mitigation for control-flow hijacking, but the strength of that mitigation depends entirely on \textit{which authentication context} a pointer is bound to. This is what I mean:
+Pointer Authentication (PAC) turns a pointer into a value that the CPU can verify before use. On AArch64 it is an architecture extension (PAuth, mandatory from Armv8.3-A); on Apple platforms it is deployed as the \textbf{arm64e} ABI.
+
+PAC is widely described as a mitigation for control-flow hijacking, but the strength of that mitigation depends entirely on \textit{which authentication context} a pointer is bound to.
 
 The default arm64e context for C function pointers is intentionally broad:
 
@@ -44,13 +46,13 @@ The default arm64e context for C function pointers is intentionally broad:
 
 This begs the question, how can we ensure that a function pointer is only usable in its intended authentication context, rather than relying exclusively on the default pointer authentication scheme?
 
-The goal of this my exploration into PAC is to be able to understand and find an answer to this question. Particularly, this involves how we might tighten scopes with the \texttt{\uscore{}\uscore{}ptrauth} type qualifier on MacOS.
+The goal of my exploration into PAC is to be able to understand and find an answer to this question. Particularly, this involves how we might tighten scopes with the \texttt{\uscore{}\uscore{}ptrauth} type qualifier on MacOS.
 
 \section{How Pointer Authentication Works}
 
-\textbf{A PAC is a keyed hash, not encryption.} \texttt{sign(pointer, modifier, key)} computes a MAC (Message Authentication Code) over the pointer and a 64-bit modifier, then stores the truncated result in the pointer's spare high bits. \texttt{authenticate} recomputes it, compares, and removes it.
+\textbf{A PAC is a keyed hash.} \texttt{sign(pointer, modifier, key)} computes a MAC (Message Authentication Code) over the pointer and a 64-bit modifier, then stores the truncated result in the pointer's spare high bits. \texttt{authenticate} recomputes it, compares, and removes it.
 
-At first glance it might seem pointless to compute a full-length MAC only to throw most of it away. But the pointer's spare high bits are all the room we have, so the PAC has to be truncated.
+At first glance, it might seem useless to compute a long MAC that just gets truncated because that would reduce the number of possible bit combinations an attacker must try, but since we store the PAC alongside the 64 bits of the pointer itself, we need to truncate it due to size constraints.
 
 Computing the longer MAC is still very important though because running the full-strength MAC first (even if it will be truncated) keeps the bits that ARE kept highly unpredictable.
 
@@ -80,7 +82,9 @@ One thing that confused me was that A and B keys do not have the same uses acros
 
 Key usage is an ABI thing, not a hardware thing. In our generic AArch64 build with \texttt{-march=armv8.3-a -mbranch-protection=pac-ret}, Clang signed the return address with IA. On arm64e, it uses IB.
 
-Clang's docs say arm64e mostly uses A keys for global stuff like function pointers and vtables, and B keys for local stuff like return addresses. A keys tend to be shared across processes, B keys tend not to be. That's an OS convention, not a hardware promise.
+Clang's docs say arm64e mostly uses A keys for global stuff like function pointers and vtables, and B keys for local stuff like return addresses. A keys tend to be shared across processes, B keys tend not to be.
+
+Something to note though is that this is entirely up to OS convention, there is no hardware guarantee of this behavior.
 
 \subsection{Modifiers / discriminators}
 
@@ -88,7 +92,11 @@ The modifier is the extra 64-bit value mixed into the hash. Clang calls it a dis
 
 \subsection{Sign, authenticate, strip}
 
-Just an FYI, throughout this writeup, I might put a * after things like PAC, AUT, or XPAC. When I do this, I am referring to a wild card. I know with pointers * means dereference and that can be confusing in this context, so I just want to get that settled before I confuse anyone haha. Alright, moving on:
+Just an FYI, throughout this writeup, I might put a * after things like PAC, AUT, or XPAC.
+
+When I do this, I am referring to a wild card. I know with pointers * means dereference and that can get confusing in our context, so I just want to get that settled before I confuse anyone haha.
+
+Alright, moving on:
 
 \begin{itemize}
 \item \texttt{PAC*} signs. Observed form: \texttt{pacda x8, x9} (sign the data pointer in \texttt{x8}, modifier in \texttt{x9}, DA key).
@@ -133,9 +141,11 @@ So on this host the PAC occupies bits 47--54 (an 8-bit field).
 
 You might be thinking now, 8 bits does not give many possible values. Could an attacker not try a blind forgery?
 
-They could, but it's not a free brute force. A forged pointer has a 1/256 chance of carrying the right signature for that key, modifier, and target address. A wrong guess traps right away, either from FPAC or Clang's \texttt{brk}, so there's no retry loop in the same process and no useful feedback from failures.
+They could, but it's not an easy brute force. A forged pointer has a 1/256 chance of carrying the right signature for that key, modifier, and target address. A wrong guess traps right away, either from FPAC or Clang's \texttt{brk}, so there's no retry loop they can do in the same process and no useful feedback from failures.
 
-The bigger point is substitution. Copying a validly signed pointer from one field into another only works when both fields use the same signing schema. Under arm64e's default \texttt{IA,0} schema, it works. That's the A case in \texttt{hardened\uscore{}ops.c}. Once each field has its own context, the same copy fails every time. That's the part I'm getting at later.
+The main issue PAC really does well against is substitution (copying a validly signed pointer from one field into another), which only works when both fields use the same signing schema. More on substitution prevention later.
+
+Under arm64e's default \texttt{IA,0} schema, it works. That's the A case in \texttt{hardened\uscore{}ops.c}. Once each field has its own context, the copy fails every time.
 
 \section{Understanding arm64e and Its Default ABI}
 
@@ -167,9 +177,16 @@ Ordinary C data pointer & none & --- & raw \texttt{.quad}, no signature \\
 \hline
 \end{tabular}
 
-Note: the vtable pointer and the function entries inside it don't use the same schema. The pointer uses \texttt{DA}, address diversity, and a discriminator from the mangled vtable identifier of the primary base class. The function entries use \texttt{IA}, address diversity, and a discriminator from the function's mangled name. For \texttt{isa} and \texttt{super}, both use address diversity, with \texttt{0x6AE1} for \texttt{isa} and \texttt{0x25DA} for \texttt{super}.
+Note: the vtable pointer and the function entries inside it don't use the same schema.
 
-Measured, \texttt{m3\uscore{}defaults.c}:
+The pointer uses \texttt{DA}, address diversity, and a discriminator from the mangled vtable identifier of the primary base class.
+
+The function entries use \texttt{IA}, address diversity, and a discriminator from the function's mangled name.
+
+
+For \texttt{isa} and \texttt{super}, both use address diversity, with \texttt{0x6AE1} for \texttt{isa} and \texttt{0x25DA} for \texttt{super}.
+
+\texttt{m3\uscore{}defaults.c}:
 
 \codelang{asm}
 \begin{verbatim}
